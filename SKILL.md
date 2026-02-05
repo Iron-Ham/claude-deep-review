@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, and code simplification. Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, and code simplification. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
@@ -15,6 +15,15 @@ Run a comprehensive deep review using parallel specialized agents covering archi
 - For thorough code quality assessment
 - To identify technical debt and architectural issues
 - When you want a complete picture of code health
+
+## Issue Classification
+
+When reviewing PR changes, all issues are classified as:
+
+- **[NEW]**: Issues in code **added or modified** by this PR. These must be addressed before merge.
+- **[PRE-EXISTING]**: Issues in code **not changed** by this PR. These are technical debt observations that should not block the PR but are valuable to track.
+
+This distinction helps reviewers focus on what's actionable for the current PR while still surfacing important context about surrounding code quality.
 
 ## Scope Detection
 
@@ -81,12 +90,29 @@ Select which aspects to review. Default is `core` (code + errors + arch).
    git diff --name-only --cached
    ```
 
-3. Build the scope context string:
+3. **Get detailed diff with line numbers** (for distinguishing new vs pre-existing issues):
+   ```bash
+   # Get the unified diff showing which lines were added/modified
+   git diff $BASE...HEAD --unified=0 | grep -E '^@@|^diff --git'
+   ```
+   This output shows the exact line ranges that were changed. Parse it to build a map of `{file: [changed_line_ranges]}`.
+
+4. Build the scope context string:
    ```
    SCOPE: Focus analysis on these files and their direct dependencies:
    {list of changed files}
 
-   Analyze how these changes affect the overall codebase. Flag concerns introduced by these changes.
+   CHANGED LINE RANGES (for classifying issues):
+   {file1}: lines {start1}-{end1}, {start2}-{end2}, ...
+   {file2}: lines {start1}-{end1}, ...
+
+   IMPORTANT - Issue Classification:
+   When reporting issues, you MUST classify each issue as one of:
+   - **[NEW]**: Issue is in code that was ADDED or MODIFIED in this PR (within the changed line ranges above)
+   - **[PRE-EXISTING]**: Issue is in code that was NOT changed by this PR (outside the changed line ranges)
+
+   This distinction is critical for PR review. New issues should be fixed before merge.
+   Pre-existing issues are technical debt to track but should not block the PR.
    ```
 
 ### Phase 2: Determine Which Agents to Launch
@@ -154,12 +180,16 @@ Rate each issue from 0-100:
 
 Start by listing what you're reviewing. For each high-confidence issue provide:
 
+- **Classification**: [NEW] or [PRE-EXISTING] based on whether the issue is in changed lines
 - Clear description and confidence score
 - File path and line number
 - Specific CLAUDE.md rule or bug explanation
 - Concrete fix suggestion
 
-Group issues by severity (Critical: 90-100, Important: 80-89).
+Group issues first by classification ([NEW] issues first, then [PRE-EXISTING]), then by severity (Critical: 90-100, Important: 80-89).
+
+**[NEW] issues** (in changed code) should be addressed before merge.
+**[PRE-EXISTING] issues** (in unchanged code) are technical debt to track but should not block the PR.
 
 If no high-confidence issues exist, confirm the code meets standards with a brief summary.
 
@@ -274,13 +304,17 @@ Ensure compliance with the project's error handling requirements:
 
 For each issue you find, provide:
 
-1. **Location**: File path and line number(s)
-2. **Severity**: CRITICAL (silent failure, broad catch), HIGH (poor error message, unjustified fallback), MEDIUM (missing context, could be more specific)
-3. **Issue Description**: What's wrong and why it's problematic
-4. **Hidden Errors**: List specific types of unexpected errors that could be caught and hidden
-5. **User Impact**: How this affects the user experience and debugging
-6. **Recommendation**: Specific code changes needed to fix the issue
-7. **Example**: Show what the corrected code should look like
+1. **Classification**: [NEW] or [PRE-EXISTING] - based on whether the issue is in code changed by this PR
+2. **Location**: File path and line number(s)
+3. **Severity**: CRITICAL (silent failure, broad catch), HIGH (poor error message, unjustified fallback), MEDIUM (missing context, could be more specific)
+4. **Issue Description**: What's wrong and why it's problematic
+5. **Hidden Errors**: List specific types of unexpected errors that could be caught and hidden
+6. **User Impact**: How this affects the user experience and debugging
+7. **Recommendation**: Specific code changes needed to fix the issue
+8. **Example**: Show what the corrected code should look like
+
+**Group your findings by classification first** ([NEW] issues before [PRE-EXISTING]), then by severity.
+[NEW] issues should be fixed before merge. [PRE-EXISTING] issues are technical debt to track.
 
 ## Your Tone
 
@@ -358,15 +392,25 @@ Analyze the module dependency architecture of this codebase.
 | App | ... |
 
 #### Layering Violations
-- {list any violations with explanation}
+For each violation, classify as:
+- **[NEW]**: Violation introduced by changes in this PR
+- **[PRE-EXISTING]**: Violation that existed before this PR
+
+| Violation | Classification | Explanation |
+|-----------|----------------|-------------|
+| ... | [NEW]/[PRE-EXISTING] | ... |
 
 #### Fan-in/Fan-out Concerns
-| Module | Fan-in | Fan-out | Concern |
-|--------|--------|---------|---------|
-| ... | ... | ... | ... |
+| Module | Fan-in | Fan-out | Classification | Concern |
+|--------|--------|---------|----------------|---------|
+| ... | ... | ... | [NEW]/[PRE-EXISTING] | ... |
 
 #### Recommendations
-- {specific actionable recommendations}
+**[NEW] issues (fix before merge)**:
+- {issues introduced by this PR}
+
+**[PRE-EXISTING] issues (technical debt)**:
+- {existing issues to track}
 ```
 
 READ-ONLY analysis - do not modify any files.
@@ -416,6 +460,7 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
 
 #### Direct Cycles Found
 - **Cycle 1**: A → B → A
+  - **Classification**: [NEW] or [PRE-EXISTING]
   - A imports: {what from B}
   - B imports: {what from A}
   - Impact: {why this is problematic}
@@ -423,17 +468,22 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
 
 #### Indirect Cycles Found
 - **Cycle 1**: A → B → C → A
+  - **Classification**: [NEW] or [PRE-EXISTING]
   - Chain explanation
   - Impact and suggestion
 
 #### Test/Production Coupling
-- {any issues found}
+- {any issues found, classified as [NEW] or [PRE-EXISTING]}
 
 #### Suspicious Relationships
 - {patterns that might indicate hidden cycles}
 
 #### Recommendations
-- {prioritized list of cycles to break and how}
+**[NEW] cycles (fix before merge)**:
+- {cycles introduced by this PR}
+
+**[PRE-EXISTING] cycles (technical debt)**:
+- {existing cycles to track}
 ```
 
 READ-ONLY analysis - do not modify any files.
@@ -566,9 +616,9 @@ Analyze for pattern consistency across modules in this codebase.
 | Error handling | ... | ... |
 
 #### Pattern Deviations
-| Location | Expected Pattern | Actual Pattern | Impact |
-|----------|------------------|----------------|--------|
-| ... | ... | ... | High/Medium/Low |
+| Location | Expected Pattern | Actual Pattern | Classification | Impact |
+|----------|------------------|----------------|----------------|--------|
+| ... | ... | ... | [NEW]/[PRE-EXISTING] | High/Medium/Low |
 
 #### Evolution/Drift
 - {observations about how patterns have changed over time}
@@ -577,9 +627,12 @@ Analyze for pattern consistency across modules in this codebase.
 - {specific inconsistencies that could confuse developers}
 
 #### Standardization Recommendations
-1. {highest priority standardization}
-2. {second priority}
-3. {third priority}
+
+**[NEW] deviations (fix before merge)**:
+- {pattern violations introduced by this PR}
+
+**[PRE-EXISTING] deviations (technical debt)**:
+- {existing inconsistencies to track}
 
 **Quick Wins**: {easy fixes that improve consistency}
 ```
@@ -730,6 +783,7 @@ Provide your analysis in this structure:
 
 ```
 ## Type: [TypeName]
+**Classification**: [NEW] (type added/modified in this PR) or [PRE-EXISTING] (type not changed)
 
 ### Invariants Identified
 - [List each invariant with a brief description]
@@ -751,11 +805,13 @@ Provide your analysis in this structure:
 [What the type does well]
 
 ### Concerns
-[Specific issues that need attention]
+[Specific issues that need attention - mark each as [NEW] or [PRE-EXISTING]]
 
 ### Recommended Improvements
-[Concrete, actionable suggestions that won't overcomplicate the codebase]
+[Concrete, actionable suggestions - prioritize [NEW] issues for immediate fix]
 ```
+
+**Prioritization**: Focus primarily on [NEW] types and changes. [PRE-EXISTING] concerns are valuable context but should not block the PR.
 
 **Key Principles:**
 
@@ -846,21 +902,28 @@ Your analysis output should be structured as:
 
 **Summary**: Brief overview of the comment analysis scope and findings
 
-**Critical Issues**: Comments that are factually incorrect or highly misleading
+**[NEW] Issues (in code changed by this PR)**:
+
+*Critical Issues*: Comments that are factually incorrect or highly misleading
 - Location: [file:line]
 - Issue: [specific problem]
 - Suggestion: [recommended fix]
 
-**Improvement Opportunities**: Comments that could be enhanced
+*Improvement Opportunities*: Comments that could be enhanced
 - Location: [file:line]
 - Current state: [what's lacking]
 - Suggestion: [how to improve]
 
-**Recommended Removals**: Comments that add no value or create confusion
+*Recommended Removals*: Comments that add no value or create confusion
 - Location: [file:line]
 - Rationale: [why it should be removed]
 
+**[PRE-EXISTING] Issues (in unchanged code)**:
+(Same structure as above, but these are technical debt observations, not PR blockers)
+
 **Positive Findings**: Well-written comments that serve as good examples (if any)
+
+**Prioritization**: [NEW] issues should be addressed before merge. [PRE-EXISTING] issues are technical debt to track separately.
 
 Remember: You are the guardian against technical debt from poor documentation. Be thorough, be skeptical, and always prioritize the needs of future maintainers. Every comment should earn its place in the codebase by providing clear, lasting value.
 
@@ -926,10 +989,21 @@ You are an expert test coverage analyst specializing in pull request review. You
 Structure your analysis as:
 
 1. **Summary**: Brief overview of test coverage quality
-2. **Critical Gaps** (if any): Tests rated 8-10 that must be added
-3. **Important Improvements** (if any): Tests rated 5-7 that should be considered
+
+2. **[NEW] Code Coverage Gaps** (code added/modified in this PR):
+   - *Critical Gaps* (8-10): Tests that must be added before merge
+   - *Important Improvements* (5-7): Tests that should be considered
+
+3. **[PRE-EXISTING] Code Coverage Gaps** (unchanged code):
+   - *Critical Gaps* (8-10): Existing untested critical paths (technical debt)
+   - *Important Improvements* (5-7): Existing coverage gaps to track
+
 4. **Test Quality Issues** (if any): Tests that are brittle or overfit to implementation
+   - Mark each as [NEW] or [PRE-EXISTING]
+
 5. **Positive Observations**: What's well-tested and follows best practices
+
+**Prioritization**: [NEW] gaps for code introduced by this PR should be addressed before merge. [PRE-EXISTING] gaps are important but should not block the PR.
 
 **Important Considerations:**
 
@@ -1017,21 +1091,22 @@ After all agents complete, create a unified report:
 ### Executive Summary
 - **Scope**: {X files analyzed}
 - **Agents Run**: {list}
-- **Critical Issues**: {count}
-- **Important Issues**: {count}
-- **Suggestions**: {count}
+- **New Issues (from this PR)**: {critical count} critical, {important count} important
+- **Pre-existing Issues (technical debt)**: {critical count} critical, {important count} important
 
 ---
 
-### Critical Issues (must fix before merge)
+## 🆕 NEW ISSUES (Introduced by this PR)
+
+These issues are in code that was added or modified in this PR. **Address before merge.**
+
+### Critical Issues (must fix)
 
 #### 🔴 {Issue Title}
 - **Source**: {agent-name}
 - **Location**: `{file:line}`
 - **Details**: {description}
 - **Fix**: {recommendation}
-
----
 
 ### Important Issues (should fix)
 
@@ -1041,11 +1116,30 @@ After all agents complete, create a unified report:
 - **Details**: {description}
 - **Fix**: {recommendation}
 
----
-
-### Suggestions (nice to have)
+### Suggestions
 
 #### 🟡 {Suggestion Title}
+- **Source**: {agent-name}
+- **Location**: `{file:line}`
+- **Details**: {description}
+
+---
+
+## 📋 PRE-EXISTING ISSUES (Technical Debt)
+
+These issues exist in code that was **not changed** by this PR. They are important to track but **should not block merge**.
+
+### Critical (track for future fix)
+
+#### 🔴 {Issue Title}
+- **Source**: {agent-name}
+- **Location**: `{file:line}`
+- **Details**: {description}
+- **Suggested fix**: {recommendation}
+
+### Important (track for future fix)
+
+#### 🟠 {Issue Title}
 - **Source**: {agent-name}
 - **Location**: `{file:line}`
 - **Details**: {description}
@@ -1071,13 +1165,14 @@ After all agents complete, create a unified report:
 
 ### Action Plan
 
-1. **Before merge** (critical):
-   - {specific fixes needed}
+1. **Before merge** (new critical/important issues):
+   - {specific fixes needed for code introduced by this PR}
 
-2. **Soon after merge** (important):
-   - {issues to address}
+2. **Technical debt to track** (pre-existing issues):
+   - {critical pre-existing issues to create tickets for}
+   - {important pre-existing issues to address in future work}
 
-3. **Follow-up** (suggestions):
+3. **Nice to have** (suggestions):
    - {improvements for later}
 ```
 
@@ -1086,6 +1181,8 @@ After all agents complete, create a unified report:
 - Run `/deep-review --pr` before creating a PR to catch issues early
 - Use `core` (default) for quick essential checks
 - Use `full` for comprehensive review before major merges
-- Address critical issues before important ones
+- **Focus on [NEW] issues** - these must be fixed before merge
+- **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
 - Re-run after fixes to verify resolution
 - Use specific aspects (e.g., `types tests`) when you know the concern
+- Create follow-up tickets for critical pre-existing issues discovered during review
