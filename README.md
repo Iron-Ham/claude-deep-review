@@ -1,10 +1,10 @@
 # Claude Deep Review
 
-A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that combines architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, and code simplification into a single command.
+A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that combines architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, concurrency analysis, and code simplification into a single command.
 
 ## Features
 
-- **11 specialized review agents** running in parallel for thorough analysis
+- **14 specialized review agents** running in parallel for thorough analysis
 - **Flexible scope detection** - review PR changes, uncommitted work, or specific paths
 - **Modular aspects** - run all agents or select specific review types
 - **Prioritized output** - issues categorized as Critical, Important, or Suggestions
@@ -59,7 +59,7 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 ### Selecting Review Aspects
 
 ```bash
-# Full review with all 11 agents
+# Full review with all 14 agents
 /deep-review full
 
 # Code quality + error handling only
@@ -93,7 +93,7 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 | Aspect | Description | Agents |
 |--------|-------------|--------|
 | `core` | Essential quality checks (default) | Code Reviewer, Silent Failure Hunter, 5 Architecture agents |
-| `full` | Complete comprehensive review | All 11 agents |
+| `full` | Complete comprehensive review | All 14 agents |
 | `code` | CLAUDE.md compliance, bugs, quality | Code Reviewer |
 | `errors` | Silent failures, catch blocks | Silent Failure Hunter |
 | `arch` | Dependencies, cycles, hotspots, patterns, scale | 5 Architecture agents |
@@ -101,6 +101,9 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 | `comments` | Comment accuracy, rot detection | Comment Analyzer |
 | `tests` | Test coverage, quality, gaps | Test Analyzer |
 | `simplify` | Code clarity, refactoring | Code Simplifier |
+| `a11y` | WCAG compliance, ARIA, keyboard nav, screen readers | Accessibility Scanner |
+| `l10n` | Hardcoded strings, i18n readiness, locale handling, RTL | Localization Scanner |
+| `concurrency` | Race conditions, deadlocks, thread safety, async pitfalls | Concurrency Analyzer |
 
 ## Agents
 
@@ -131,6 +134,12 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 - **Test Analyzer** - Reviews test coverage quality, identifies critical gaps, and flags anti-patterns.
 
 - **Code Simplifier** - Suggests simplifications for clarity and maintainability while preserving functionality.
+
+- **Accessibility Scanner** - Audits code for WCAG 2.2 compliance, ARIA correctness, keyboard navigation, screen reader support, and assistive technology compatibility.
+
+- **Localization Scanner** - Identifies hardcoded strings, locale-unsafe operations, broken pluralization, and i18n/l10n gaps that would degrade the experience for international users.
+
+- **Concurrency Analyzer** - Detects race conditions, deadlocks, thread-safety violations, async/await pitfalls, and concurrency model mismatches across languages and frameworks.
 
 ## Output Format
 
