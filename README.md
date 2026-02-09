@@ -1,10 +1,10 @@
 # Claude Deep Review
 
-A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that combines architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, concurrency analysis, and code simplification into a single command.
+A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that combines architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, and code simplification into a single command.
 
 ## Features
 
-- **14 specialized review agents** running in parallel for thorough analysis
+- **15 specialized review agents** running in parallel for thorough analysis
 - **Flexible scope detection** - review PR changes, uncommitted work, or specific paths
 - **Modular aspects** - run all agents or select specific review types
 - **Prioritized output** - issues categorized as Critical, Important, or Suggestions
@@ -13,29 +13,34 @@ A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/e
 
 ## Installation
 
-### Option 1: Clone to skills directory (recommended)
+### Option 1: Plugin marketplace (recommended)
+
+```bash
+# Add the marketplace
+/plugin marketplace add Iron-Ham/claude-deep-review
+
+# Install the plugin
+/plugin install deep-review@claude-deep-review
+```
+
+To update later:
+
+```bash
+/plugin marketplace update
+```
+
+### Option 2: Clone to skills directory
 
 ```bash
 # Clone to your global skills directory
 git clone https://github.com/Iron-Ham/claude-deep-review.git ~/.claude/skills/deep-review
 ```
 
-### Option 2: Clone to project-specific skills
+### Option 3: Project-specific installation
 
 ```bash
 # Clone to a specific project's skills directory
 git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/project/.claude/skills/deep-review
-```
-
-### Option 3: Copy the skill file
-
-```bash
-# Create the skills directory if it doesn't exist
-mkdir -p ~/.claude/skills/deep-review
-
-# Copy just the SKILL.md file
-curl -o ~/.claude/skills/deep-review/SKILL.md \
-  https://raw.githubusercontent.com/Iron-Ham/claude-deep-review/main/SKILL.md
 ```
 
 ## Usage
@@ -59,7 +64,7 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 ### Selecting Review Aspects
 
 ```bash
-# Full review with all 14 agents
+# Full review with all 15 agents
 /deep-review full
 
 # Code quality + error handling only
@@ -70,6 +75,9 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 
 # Architecture analysis only
 /deep-review arch
+
+# Performance analysis
+/deep-review perf
 
 # Code simplification suggestions
 /deep-review simplify
@@ -86,6 +94,12 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 
 # Type and test analysis of specific directory
 /deep-review types tests src/models
+
+# Accessibility audit of PR
+/deep-review a11y --pr
+
+# Performance analysis of PR
+/deep-review perf --pr
 ```
 
 ## Review Aspects
@@ -93,7 +107,7 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 | Aspect | Description | Agents |
 |--------|-------------|--------|
 | `core` | Essential quality checks (default) | Code Reviewer, Silent Failure Hunter, 5 Architecture agents |
-| `full` | Complete comprehensive review | All 14 agents |
+| `full` | Complete comprehensive review | All 15 agents |
 | `code` | CLAUDE.md compliance, bugs, quality | Code Reviewer |
 | `errors` | Silent failures, catch blocks | Silent Failure Hunter |
 | `arch` | Dependencies, cycles, hotspots, patterns, scale | 5 Architecture agents |
@@ -104,6 +118,7 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 | `a11y` | WCAG compliance, ARIA, keyboard nav, screen readers | Accessibility Scanner |
 | `l10n` | Hardcoded strings, i18n readiness, locale handling, RTL | Localization Scanner |
 | `concurrency` | Race conditions, deadlocks, thread safety, async pitfalls | Concurrency Analyzer |
+| `perf` | Algorithmic complexity, allocations, caching, rendering, N+1 queries | Performance Analyzer |
 
 ## Agents
 
@@ -141,17 +156,18 @@ curl -o ~/.claude/skills/deep-review/SKILL.md \
 
 - **Concurrency Analyzer** - Detects race conditions, deadlocks, thread-safety violations, async/await pitfalls, and concurrency model mismatches across languages and frameworks.
 
+- **Performance Analyzer** - Identifies algorithmic complexity issues, excessive allocations, N+1 queries, rendering bottlenecks, bundle bloat, and missed caching/parallelization opportunities.
+
 ## Output Format
 
 The skill produces a synthesized report with:
 
 1. **Executive Summary** - Scope, agents run, issue counts
-2. **Critical Issues** (🔴) - Must fix before merge
-3. **Important Issues** (🟠) - Should fix
-4. **Suggestions** (🟡) - Nice to have
-5. **Architecture Health** - Table of checks with pass/fail
-6. **Strengths** - What's done well
-7. **Action Plan** - Prioritized next steps
+2. **New Issues** (from this PR) - Critical (🔴), Important (🟠), Suggestions (🟡)
+3. **Pre-existing Issues** (technical debt) - Tracked separately, do not block merge
+4. **Architecture Health** - Table of checks with pass/fail
+5. **Strengths** - What's done well
+6. **Action Plan** - Prioritized next steps
 
 ## Requirements
 
@@ -168,12 +184,43 @@ The skill produces a synthesized report with:
 
 4. **Synthesis** - Aggregates results from all agents into a prioritized, actionable report
 
+## Project Structure
+
+```
+claude-deep-review/
+├── .claude-plugin/
+│   ├── plugin.json              # Plugin manifest
+│   └── marketplace.json         # Marketplace catalog
+├── skills/
+│   └── deep-review/
+│       ├── SKILL.md             # Skill orchestration
+│       └── agents/              # Agent definitions (loaded on-demand)
+│           ├── code-reviewer.md
+│           ├── silent-failure-hunter.md
+│           ├── dependency-mapper.md
+│           ├── cycle-detector.md
+│           ├── hotspot-analyzer.md
+│           ├── pattern-scout.md
+│           ├── scale-assessor.md
+│           ├── type-design-analyzer.md
+│           ├── comment-analyzer.md
+│           ├── test-analyzer.md
+│           ├── code-simplifier.md
+│           ├── accessibility-scanner.md
+│           ├── localization-scanner.md
+│           ├── concurrency-analyzer.md
+│           └── performance-analyzer.md
+├── README.md
+└── LICENSE
+```
+
 ## Tips
 
 - Run `/deep-review` before creating a PR to catch issues early
 - Use `core` (default) for quick essential checks during development
 - Use `full` before major merges or releases
-- Address critical issues before important ones
+- **Focus on [NEW] issues** - these must be fixed before merge
+- **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
 - Re-run after fixes to verify resolution
 
 ## License
