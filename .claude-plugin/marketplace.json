@@ -1,0 +1,33 @@
+{
+  "name": "claude-deep-review",
+  "owner": {
+    "name": "Iron-Ham"
+  },
+  "metadata": {
+    "description": "Comprehensive code review plugin with 15 specialized agents"
+  },
+  "plugins": [
+    {
+      "name": "deep-review",
+      "source": "./",
+      "description": "Comprehensive code review skill with 15 specialized agents for architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, and simplification.",
+      "version": "1.4.0",
+      "author": {
+        "name": "Iron-Ham"
+      },
+      "homepage": "https://github.com/Iron-Ham/claude-deep-review",
+      "repository": "https://github.com/Iron-Ham/claude-deep-review",
+      "license": "MIT",
+      "keywords": [
+        "code-review",
+        "architecture",
+        "testing",
+        "accessibility",
+        "performance",
+        "concurrency",
+        "localization"
+      ],
+      "category": "code-quality"
+    }
+  ]
+}
