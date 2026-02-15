@@ -1,11 +1,5 @@
-### Dependency Mapper Agent
+# Dependency Mapper Agent
 
-**Task tool parameters:**
-- `subagent_type`: `Explore`
-- `description`: "Map dependencies"
-
-**Prompt:**
-```
 Analyze the module dependency architecture of this codebase.
 
 {SCOPE_CONTEXT}
@@ -72,4 +66,3 @@ For each violation, classify as:
 ```
 
 READ-ONLY analysis - do not modify any files.
-```

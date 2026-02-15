@@ -1,11 +1,5 @@
-### Hotspot Analyzer Agent
+# Hotspot Analyzer Agent
 
-**Task tool parameters:**
-- `subagent_type`: `Explore`
-- `description`: "Find coupling hotspots"
-
-**Prompt:**
-```
 Identify coupling hotspots - modules or files that are overly connected.
 
 {SCOPE_CONTEXT}
@@ -67,4 +61,3 @@ Identify coupling hotspots - modules or files that are overly connected.
 ```
 
 READ-ONLY analysis - do not modify any files.
-```

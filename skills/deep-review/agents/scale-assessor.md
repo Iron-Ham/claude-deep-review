@@ -1,11 +1,5 @@
-### Scale Assessor Agent
+# Scale Assessor Agent
 
-**Task tool parameters:**
-- `subagent_type`: `Explore`
-- `description`: "Assess scalability"
-
-**Prompt:**
-```
 Identify scalability risks - things that become problems as the codebase grows.
 
 {SCOPE_CONTEXT}
@@ -65,11 +59,11 @@ Identify scalability risks - things that become problems as the codebase grows.
 | ... | ... | Growing/Stable | Yes/No |
 
 #### Top 5 Scalability Risks (by severity)
-1. 🔴 {critical risk}
-2. 🟠 {high risk}
-3. 🟠 {high risk}
-4. 🟡 {medium risk}
-5. 🟡 {medium risk}
+1. {critical risk}
+2. {high risk}
+3. {high risk}
+4. {medium risk}
+5. {medium risk}
 
 #### Recommendations
 - **Immediate**: {address now}
@@ -78,4 +72,3 @@ Identify scalability risks - things that become problems as the codebase grows.
 ```
 
 READ-ONLY analysis - do not modify any files.
-```

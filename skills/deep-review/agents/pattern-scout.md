@@ -1,11 +1,5 @@
-### Pattern Scout Agent
+# Pattern Scout Agent
 
-**Task tool parameters:**
-- `subagent_type`: `Explore`
-- `description`: "Check pattern consistency"
-
-**Prompt:**
-```
 Analyze for pattern consistency across modules in this codebase.
 
 {SCOPE_CONTEXT}
@@ -72,4 +66,3 @@ Analyze for pattern consistency across modules in this codebase.
 ```
 
 READ-ONLY analysis - do not modify any files.
-```
