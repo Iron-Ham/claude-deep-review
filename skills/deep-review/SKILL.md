@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, and code simplification. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
@@ -62,21 +62,43 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `concurrency` | Race conditions, deadlocks, thread safety, async pitfalls |
 | `perf` | Algorithmic complexity, allocations, caching, rendering, N+1 queries |
 | `core` | code + errors + arch (default) |
-| `full` | All aspects |
+| `full` | All cross-cutting aspects (does not include platform-specific) |
+
+**Platform-specific aspects** (automatically included when relevant, or explicitly requested):
+
+| Aspect | Description |
+|--------|-------------|
+| `ios` | Swift/SwiftUI/UIKit lifecycle, ARC, Apple APIs, App Store compliance |
+| `android` | Activity/Fragment lifecycle, Compose, manifest, Android security |
+| `ts-frontend` | React/Vue/Angular state, SSR/hydration, component patterns, browser APIs |
+| `ts-backend` | Node.js event loop, middleware, ORM, auth, graceful shutdown, API design |
+| `python` | Pythonic idioms, type hints, Django/FastAPI/Flask, packaging |
+| `rust` | Ownership idioms, unsafe auditing, error handling, trait design |
+| `go` | Go idioms, interface design, context propagation, module hygiene |
+| `rails` | Rails conventions, ActiveRecord, migration safety, background jobs |
+| `flutter` | Widget design, state management, Dart idioms, platform channels |
+| `mobile` | ios + android |
+| `ts` | ts-frontend + ts-backend |
+
+Platform reviewers are **automatically included** when the team lead determines they are relevant based on the changed files and project context. For example, changing `.swift` files in an iOS project will include the iOS reviewer. The team lead uses its judgment to disambiguate — `.swift` in a macOS project won't trigger iOS, `.kt` in a Ktor server won't trigger Android. Users can also explicitly request platform aspects (e.g., `/deep-review ios`). Platform aspects are never included in `core` or `full` unless detected or explicitly requested.
 
 **Usage examples:**
 ```
-/deep-review                    # core review of PR changes
-/deep-review --pr               # explicit PR scope
-/deep-review --changes          # uncommitted changes only
-/deep-review full --pr          # all agents on PR changes
-/deep-review code errors        # specific aspects only
-/deep-review types tests --pr   # type and test analysis of PR
+/deep-review                    # core review of PR changes (+ auto-detected platforms)
+/deep-review --pr               # explicit PR scope (+ auto-detected platforms)
+/deep-review --changes          # uncommitted changes only (+ auto-detected platforms)
+/deep-review full --pr          # all cross-cutting agents on PR (+ auto-detected platforms)
+/deep-review code errors        # specific aspects only (+ auto-detected platforms)
+/deep-review types tests --pr   # type and test analysis of PR (+ auto-detected platforms)
 /deep-review a11y --pr          # accessibility audit of PR
 /deep-review l10n --pr          # localization review of PR
 /deep-review concurrency --pr   # concurrency analysis of PR
 /deep-review perf --pr          # performance analysis of PR
-/deep-review src/features       # analyze specific path
+/deep-review ios --pr           # explicitly include iOS reviewer
+/deep-review ts --pr            # both TypeScript frontend + backend reviewers
+/deep-review mobile --pr        # iOS + Android reviewers
+/deep-review python rust --pr   # explicitly include Python and Rust reviewers
+/deep-review src/features       # analyze specific path (+ auto-detected platforms)
 ```
 
 ## Agent Dispatch Table
@@ -98,6 +120,15 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | localization-scanner | l10n | inherit | agents/localization-scanner.md |
 | concurrency-analyzer | concurrency | inherit | agents/concurrency-analyzer.md |
 | performance-analyzer | perf | inherit | agents/performance-analyzer.md |
+| ios-platform-reviewer | ios | inherit | agents/ios-platform-reviewer.md |
+| android-platform-reviewer | android | inherit | agents/android-platform-reviewer.md |
+| ts-frontend-reviewer | ts-frontend | inherit | agents/ts-frontend-reviewer.md |
+| ts-backend-reviewer | ts-backend | inherit | agents/ts-backend-reviewer.md |
+| python-reviewer | python | inherit | agents/python-reviewer.md |
+| rust-reviewer | rust | inherit | agents/rust-reviewer.md |
+| go-reviewer | go | inherit | agents/go-reviewer.md |
+| rails-reviewer | rails | inherit | agents/rails-reviewer.md |
+| flutter-reviewer | flutter | inherit | agents/flutter-reviewer.md |
 
 All teammates use `subagent_type: "general-purpose"` (needed for file writing).
 
@@ -145,9 +176,38 @@ All teammates use `subagent_type: "general-purpose"` (needed for file writing).
    Pre-existing issues are technical debt to track but should not block the PR.
    ```
 
+### Phase 1.5: Determine Platform Reviewers
+
+After obtaining the list of changed files, determine which platform-specific reviewers to include. Available platform reviewers and what they cover:
+
+| Aspect | Covers |
+|--------|--------|
+| `ios` | Swift/SwiftUI/UIKit lifecycle, ARC, Apple APIs, App Store compliance |
+| `android` | Activity/Fragment lifecycle, Compose, manifest, Android security |
+| `ts-frontend` | React/Vue/Angular state, SSR/hydration, component patterns, browser APIs |
+| `ts-backend` | Node.js event loop, middleware, ORM, auth, graceful shutdown, API design |
+| `python` | Pythonic idioms, type hints, Django/FastAPI/Flask, packaging |
+| `rust` | Ownership idioms, unsafe auditing, error handling, trait design |
+| `go` | Go idioms, interface design, context propagation, module hygiene |
+| `rails` | Rails conventions, ActiveRecord, migration safety, background jobs |
+| `flutter` | Widget design, state management, Dart idioms, platform channels |
+
+**If the user explicitly requested platform aspects** (e.g., `/deep-review ios`, `/deep-review python rust`), use those directly.
+
+**If the user did not request any platform aspects**, look at the changed files and the project context to decide which platform reviewers are relevant. Use your judgment — examine file extensions, imports, build files, and project structure to determine the right reviewers. Be precise: `.swift` files in a macOS project should not trigger the iOS reviewer, `.kt` files in a Ktor server should not trigger Android, `.ts` files in an Express app should trigger `ts-backend` not `ts-frontend`, etc. When genuinely uncertain, skip rather than guess wrong — the user can always request a platform reviewer explicitly.
+
+**Group alias expansion**:
+- `mobile` → `ios`, `android`
+- `ts` → `ts-frontend`, `ts-backend`
+
+**Merge behavior**:
+- Platform aspects are **added to** whatever cross-cutting aspects the user requested
+- Platform aspects are never included in `core` or `full` expansion — they only come from auto-detection or explicit request
+- Deduplicate: if auto-detection finds `ts-frontend` and the user also typed `ts`, only include `ts-frontend` once
+
 ### Phase 2: Determine Which Agents to Launch
 
-Based on selected aspects:
+Based on selected aspects (including any auto-detected platform aspects from Phase 1.5):
 
 | Aspect | Agents to Launch |
 |--------|-----------------|
@@ -164,6 +224,15 @@ Based on selected aspects:
 | `l10n` | Localization Scanner |
 | `concurrency` | Concurrency Analyzer |
 | `perf` | Performance Analyzer |
+| `ios` | iOS Platform Reviewer |
+| `android` | Android Platform Reviewer |
+| `ts-frontend` | TypeScript Frontend Reviewer |
+| `ts-backend` | TypeScript Backend Reviewer |
+| `python` | Python Reviewer |
+| `rust` | Rust Reviewer |
+| `go` | Go Reviewer |
+| `rails` | Rails Reviewer |
+| `flutter` | Flutter Reviewer |
 
 ### Phase 3: Initialize Team and Launch Teammates
 
@@ -282,5 +351,7 @@ If you encounter errors during analysis (e.g., files not found, permission issue
 - **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
 - Re-run after fixes to verify resolution
 - Use specific aspects (e.g., `types tests`) when you know the concern
+- Platform reviewers are automatically included when relevant — no need to specify them manually
+- Use `mobile`, `ts`, or explicit platform names (e.g., `ios`, `python`) to force specific platform reviewers
 - Create follow-up tickets for critical pre-existing issues discovered during review
 - Individual agent findings are available in `/tmp/deep-review-*/` for detailed inspection

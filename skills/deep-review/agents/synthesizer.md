@@ -107,6 +107,7 @@ These issues exist in code that was **not changed** by this PR. They are importa
 | Localization readiness | Pass / Fail / Not assessed | ... |
 | Concurrency safety | Pass / Fail / Not assessed | ... |
 | Performance efficiency | Pass / Fail / Not assessed | ... |
+| Platform conventions | Pass / Fail / Not assessed | ... |
 
 Use "Not assessed" when the corresponding agent was not run or did not produce findings.
 
