@@ -4,12 +4,15 @@ A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/e
 
 ## Features
 
-- **15 specialized review agents** running in parallel for thorough analysis
-- **Flexible scope detection** - review PR changes, uncommitted work, or specific paths
-- **Modular aspects** - run all agents or select specific review types
-- **Prioritized output** - issues categorized as Critical, Important, or Suggestions
-- **Architecture health assessment** - dependency mapping, cycle detection, hotspot analysis
-- **Standalone** - no dependencies on other plugins
+- **15 specialized review agents** running in parallel via team-based orchestration
+- **File-based data flow** — agent findings written to files, keeping context windows lightweight
+- **Dedicated synthesis** — a separate agent merges all findings with a fresh context window
+- **Flexible scope detection** — review PR changes, uncommitted work, or specific paths
+- **Modular aspects** — run all agents or select specific review types
+- **Prioritized output** — issues categorized as Critical, Important, or Suggestions
+- **Architecture health assessment** — dependency mapping, cycle detection, hotspot analysis
+- **Graceful partial failure** — if some agents fail, the report notes gaps without blocking
+- **Standalone** — no dependencies on other plugins
 
 ## Installation
 
@@ -163,11 +166,13 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 The skill produces a synthesized report with:
 
 1. **Executive Summary** - Scope, agents run, issue counts
-2. **New Issues** (from this PR) - Critical (🔴), Important (🟠), Suggestions (🟡)
+2. **New Issues** (from this PR) - Critical, Important, Suggestions
 3. **Pre-existing Issues** (technical debt) - Tracked separately, do not block merge
 4. **Architecture Health** - Table of checks with pass/fail
 5. **Strengths** - What's done well
 6. **Action Plan** - Prioritized next steps
+
+Individual agent findings are also available in `/tmp/deep-review-*/` for detailed inspection.
 
 ## Requirements
 
@@ -176,13 +181,17 @@ The skill produces a synthesized report with:
 
 ## How It Works
 
-1. **Scope Detection** - Determines which files to analyze based on flags (`--pr`, `--changes`) or path argument
+1. **Scope Detection** — Determines which files to analyze based on flags (`--pr`, `--changes`) or path argument
 
-2. **Agent Selection** - Selects which agents to run based on specified aspects
+2. **Agent Selection** — Selects which agents to run based on specified aspects
 
-3. **Parallel Execution** - Launches all applicable agents simultaneously using Claude Code's Task tool
+3. **Team Initialization** — Creates a team and results directory, then spawns all selected agents as teammates in parallel
 
-4. **Synthesis** - Aggregates results from all agents into a prioritized, actionable report
+4. **Parallel Analysis** — Each agent reads its instructions from a dedicated file, analyzes the code, and writes findings to its own output file in `/tmp/deep-review-*/`
+
+5. **Synthesis** — A dedicated synthesis agent reads all output files and merges them into a unified, deduplicated report
+
+6. **Report & Cleanup** — The final report is presented to the user and the team is cleaned up
 
 ## Project Structure
 
@@ -193,8 +202,8 @@ claude-deep-review/
 │   └── marketplace.json         # Marketplace catalog
 ├── skills/
 │   └── deep-review/
-│       ├── SKILL.md             # Skill orchestration
-│       └── agents/              # Agent definitions (loaded on-demand)
+│       ├── SKILL.md             # Skill orchestration (6-phase team workflow)
+│       └── agents/              # Agent definitions (pure instructions)
 │           ├── code-reviewer.md
 │           ├── silent-failure-hunter.md
 │           ├── dependency-mapper.md
@@ -209,7 +218,8 @@ claude-deep-review/
 │           ├── accessibility-scanner.md
 │           ├── localization-scanner.md
 │           ├── concurrency-analyzer.md
-│           └── performance-analyzer.md
+│           ├── performance-analyzer.md
+│           └── synthesizer.md
 ├── README.md
 └── LICENSE
 ```

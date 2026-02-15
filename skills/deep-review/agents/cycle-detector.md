@@ -1,11 +1,5 @@
-### Cycle Detector Agent
+# Cycle Detector Agent
 
-**Task tool parameters:**
-- `subagent_type`: `Explore`
-- `description`: "Detect dependency cycles"
-
-**Prompt:**
-```
 Analyze for circular dependencies and bidirectional imports in this codebase.
 
 {SCOPE_CONTEXT}
@@ -16,11 +10,11 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
    - Look at imports/requires in source files
    - Check build configuration for declared dependencies
 
-2. **Look for direct cycles** (A→B→A):
+2. **Look for direct cycles** (A->B->A):
    - Module A imports from Module B
    - Module B imports from Module A
 
-3. **Look for indirect cycles** (A→B→C→A):
+3. **Look for indirect cycles** (A->B->C->A):
    - Longer chains that eventually circle back
    - These are harder to spot but equally problematic
 
@@ -39,7 +33,7 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
 ### Cycle Detection Analysis
 
 #### Direct Cycles Found
-- **Cycle 1**: A → B → A
+- **Cycle 1**: A -> B -> A
   - **Classification**: [NEW] or [PRE-EXISTING]
   - A imports: {what from B}
   - B imports: {what from A}
@@ -47,7 +41,7 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
   - Suggestion: {how to break the cycle}
 
 #### Indirect Cycles Found
-- **Cycle 1**: A → B → C → A
+- **Cycle 1**: A -> B -> C -> A
   - **Classification**: [NEW] or [PRE-EXISTING]
   - Chain explanation
   - Impact and suggestion
@@ -67,4 +61,3 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
 ```
 
 READ-ONLY analysis - do not modify any files.
-```

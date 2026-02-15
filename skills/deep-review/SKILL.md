@@ -6,7 +6,7 @@ argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 
 # Deep Review Skill
 
-Run a comprehensive deep review using parallel specialized agents covering architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, and simplification.
+Run a comprehensive deep review using a team of specialized agents covering architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, and simplification.
 
 ## When to Use
 
@@ -79,6 +79,28 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 /deep-review src/features       # analyze specific path
 ```
 
+## Agent Dispatch Table
+
+| Agent ID | Aspect | Model | Agent File |
+|----------|--------|-------|------------|
+| code-reviewer | code | opus | agents/code-reviewer.md |
+| silent-failure-hunter | errors | inherit | agents/silent-failure-hunter.md |
+| dependency-mapper | arch | inherit | agents/dependency-mapper.md |
+| cycle-detector | arch | inherit | agents/cycle-detector.md |
+| hotspot-analyzer | arch | inherit | agents/hotspot-analyzer.md |
+| pattern-scout | arch | inherit | agents/pattern-scout.md |
+| scale-assessor | arch | inherit | agents/scale-assessor.md |
+| type-design-analyzer | types | inherit | agents/type-design-analyzer.md |
+| comment-analyzer | comments | inherit | agents/comment-analyzer.md |
+| test-analyzer | tests | inherit | agents/test-analyzer.md |
+| code-simplifier | simplify | opus | agents/code-simplifier.md |
+| accessibility-scanner | a11y | inherit | agents/accessibility-scanner.md |
+| localization-scanner | l10n | inherit | agents/localization-scanner.md |
+| concurrency-analyzer | concurrency | inherit | agents/concurrency-analyzer.md |
+| performance-analyzer | perf | inherit | agents/performance-analyzer.md |
+
+All teammates use `subagent_type: "general-purpose"` (needed for file writing).
+
 ## Instructions
 
 ### Phase 1: Determine Scope
@@ -105,7 +127,7 @@ Select which aspects to review. Default is `core` (code + errors + arch).
    ```
    This output shows the exact line ranges that were changed. Parse it to build a map of `{file: [changed_line_ranges]}`.
 
-4. Build the scope context string:
+4. Build the scope context string (referred to as `SCOPE_CONTEXT` below):
    ```
    SCOPE: Focus analysis on these files and their direct dependencies:
    {list of changed files}
@@ -143,129 +165,112 @@ Based on selected aspects:
 | `concurrency` | Concurrency Analyzer |
 | `perf` | Performance Analyzer |
 
-### Phase 3: Launch Parallel Agents
+### Phase 3: Initialize Team and Launch Teammates
 
-Launch all applicable agents in parallel using the Task tool. Include the scope context in each prompt.
+1. **Create results directory**:
+   ```bash
+   mkdir -p /tmp/deep-review-$(uuidgen | tr '[:upper:]' '[:lower:]')/
+   ```
+   Store the path as `REVIEW_DIR`.
 
-For each agent, read its definition from the corresponding file in the `agents/` directory to get the Task tool parameters and prompt:
+2. **Create the team**:
+   Use `TeamCreate` with name `"deep-review"`.
 
-| Agent | Definition |
-|-------|------------|
-| Code Reviewer | [agents/code-reviewer.md](agents/code-reviewer.md) |
-| Silent Failure Hunter | [agents/silent-failure-hunter.md](agents/silent-failure-hunter.md) |
-| Dependency Mapper | [agents/dependency-mapper.md](agents/dependency-mapper.md) |
-| Cycle Detector | [agents/cycle-detector.md](agents/cycle-detector.md) |
-| Hotspot Analyzer | [agents/hotspot-analyzer.md](agents/hotspot-analyzer.md) |
-| Pattern Scout | [agents/pattern-scout.md](agents/pattern-scout.md) |
-| Scale Assessor | [agents/scale-assessor.md](agents/scale-assessor.md) |
-| Type Design Analyzer | [agents/type-design-analyzer.md](agents/type-design-analyzer.md) |
-| Comment Analyzer | [agents/comment-analyzer.md](agents/comment-analyzer.md) |
-| Test Analyzer | [agents/test-analyzer.md](agents/test-analyzer.md) |
-| Code Simplifier | [agents/code-simplifier.md](agents/code-simplifier.md) |
-| Accessibility Scanner | [agents/accessibility-scanner.md](agents/accessibility-scanner.md) |
-| Localization Scanner | [agents/localization-scanner.md](agents/localization-scanner.md) |
-| Concurrency Analyzer | [agents/concurrency-analyzer.md](agents/concurrency-analyzer.md) |
-| Performance Analyzer | [agents/performance-analyzer.md](agents/performance-analyzer.md) |
+3. **Create tasks** for each selected agent:
+   Use `TaskCreate` for each agent with:
+   - Subject: `"Run {agent-display-name} analysis"`
+   - Description: includes the output file path `{REVIEW_DIR}/{agent-id}.md`
 
----
+4. **Spawn all analysis teammates in parallel**:
+   For each selected agent, use the Task tool:
+   - `subagent_type`: `"general-purpose"`
+   - `model`: from dispatch table (`opus` or omit for inherit)
+   - `team_name`: `"deep-review"`
+   - `name`: `"{agent-id}"` (e.g., `"code-reviewer"`, `"cycle-detector"`)
+   - `prompt`: use the Teammate Prompt Template below, filled in with the agent's details
 
-## Phase 4: Synthesize Results
+### Phase 4: Monitor Task Completion
 
-After all agents complete, create a unified report:
+1. Wait for summary messages from all teammates (they will send a brief message via SendMessage when done)
+2. Verify via `TaskList` that all analysis tasks show `"completed"`
+3. For any tasks that did not complete, check if the output file exists anyway (partial findings are still valuable)
+4. Build a gap report string listing any agents that failed to produce output
 
-```markdown
-## Deep Review: {branch-name or scope}
+### Phase 5: Launch Synthesis Teammate
 
-### Executive Summary
-- **Scope**: {X files analyzed}
-- **Agents Run**: {list}
-- **New Issues (from this PR)**: {critical count} critical, {important count} important
-- **Pre-existing Issues (technical debt)**: {critical count} critical, {important count} important
+1. **Create a synthesis task**:
+   Use `TaskCreate` with subject `"Synthesize findings into unified report"`.
 
----
+2. **Spawn the synthesis teammate**:
+   - `subagent_type`: `"general-purpose"`
+   - `team_name`: `"deep-review"`
+   - `name`: `"synthesizer"`
+   - `prompt`: Include the following in the prompt:
+     - Path to the synthesis instructions file: `agents/synthesizer.md`
+     - The `REVIEW_DIR` path
+     - The list of expected output files (one per agent that was launched)
+     - The gap report (if any agents failed)
+     - The scope description (for the report header)
+     - Instruction to write the final report to `{REVIEW_DIR}/REPORT.md`
+     - Instruction to mark the synthesis task as completed and send a message to `"team-lead"` when done
 
-## 🆕 NEW ISSUES (Introduced by this PR)
+3. Wait for the synthesis teammate to complete.
 
-These issues are in code that was added or modified in this PR. **Address before merge.**
+### Phase 6: Present Report and Cleanup
 
-### Critical Issues (must fix)
+1. **Read the report**: Read `{REVIEW_DIR}/REPORT.md` and present its contents to the user
+2. **Shutdown teammates**: Send shutdown requests to all teammates
+3. **Clean up team**: Use `TeamDelete` to clean up team infrastructure
+4. **Inform the user**: Let them know individual agent findings are available at `{REVIEW_DIR}/` for detailed inspection
 
-#### 🔴 {Issue Title}
-- **Source**: {agent-name}
-- **Location**: `{file:line}`
-- **Details**: {description}
-- **Fix**: {recommendation}
+## Teammate Prompt Template
 
-### Important Issues (should fix)
+This is the standardized prompt given to each analysis teammate. Fill in the placeholders before sending.
 
-#### 🟠 {Issue Title}
-- **Source**: {agent-name}
-- **Location**: `{file:line}`
-- **Details**: {description}
-- **Fix**: {recommendation}
+```
+You are a specialized code analysis agent on the "deep-review" team.
 
-### Suggestions
+## Your Task
 
-#### 🟡 {Suggestion Title}
-- **Source**: {agent-name}
-- **Location**: `{file:line}`
-- **Details**: {description}
+1. Read your analysis instructions from: {AGENT_FILE_PATH}
+   (This is relative to the skill directory. Use the Read tool to read the file.)
+2. Analyze the code following those instructions
+3. Write your complete findings to: {OUTPUT_FILE_PATH}
+4. Mark your task as completed via TaskUpdate (task ID: {TASK_ID})
+5. Send a brief summary to "team-lead" via SendMessage
+   - Include only counts (e.g., "Found 3 critical, 2 important new issues; 5 pre-existing issues")
+   - Do NOT include detailed findings in the message — they are in the output file
 
----
+## Scope Context
 
-## 📋 PRE-EXISTING ISSUES (Technical Debt)
+{SCOPE_CONTEXT}
 
-These issues exist in code that was **not changed** by this PR. They are important to track but **should not block merge**.
+Note: Your analysis instructions reference `{SCOPE_CONTEXT}`.
+This refers to the Scope Context provided directly above — use it as-is.
 
-### Critical (track for future fix)
+## Output File Format
 
-#### 🔴 {Issue Title}
-- **Source**: {agent-name}
-- **Location**: `{file:line}`
-- **Details**: {description}
-- **Suggested fix**: {recommendation}
+Write your findings as a markdown file. Start with a heading identifying the agent,
+then list all findings using the output format specified in your analysis instructions.
 
-### Important (track for future fix)
+## Classification Rules
 
-#### 🟠 {Issue Title}
-- **Source**: {agent-name}
-- **Location**: `{file:line}`
-- **Details**: {description}
+When classifying issues as [NEW] or [PRE-EXISTING], use the changed line ranges
+provided in the Scope Context above. Issues in changed lines are [NEW]; all others
+are [PRE-EXISTING].
 
----
+## Error Handling
 
-### Architecture Health
+If you encounter errors during analysis (e.g., files not found, permission issues):
+- Write partial findings to the output file along with an ERROR section describing what went wrong
+- Mark the task as completed anyway (so the pipeline is not blocked)
+- Note the error in your summary message to team-lead
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| No circular dependencies | ✅ / ❌ | ... |
-| Clean layer boundaries | ✅ / ❌ | ... |
-| No god modules | ✅ / ❌ | ... |
-| Consistent patterns | ✅ / ❌ | ... |
-| Scalable structure | ✅ / ❌ | ... |
-| Accessibility | ✅ / ❌ | ... |
-| Localization readiness | ✅ / ❌ | ... |
-| Concurrency safety | ✅ / ❌ | ... |
-| Performance efficiency | ✅ / ❌ | ... |
+## Important
 
----
-
-### Strengths
-- {What's done well in this code}
-
----
-
-### Action Plan
-
-1. **Before merge** (new critical/important issues):
-   - {specific fixes needed for code introduced by this PR}
-
-2. **Technical debt to track** (pre-existing issues):
-   - {critical pre-existing issues to create tickets for}
-   - {important pre-existing issues to address in future work}
-
-3. **Nice to have** (suggestions):
-   - {improvements for later}
+- Do NOT modify any source code files — this is a READ-ONLY analysis
+- Write your findings ONLY to the output file path specified above
+- Be thorough but focused — quality over quantity
 ```
 
 ## Tips
@@ -278,3 +283,4 @@ These issues exist in code that was **not changed** by this PR. They are importa
 - Re-run after fixes to verify resolution
 - Use specific aspects (e.g., `types tests`) when you know the concern
 - Create follow-up tickets for critical pre-existing issues discovered during review
+- Individual agent findings are available in `/tmp/deep-review-*/` for detailed inspection
