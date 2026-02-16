@@ -4,7 +4,7 @@ A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/e
 
 ## Features
 
-- **24 specialized review agents** running in parallel via team-based orchestration
+- **33 specialized review agents** running in parallel via team-based orchestration
 - **File-based data flow** — agent findings written to files, keeping context windows lightweight
 - **Dedicated synthesis** — a separate agent merges all findings with a fresh context window
 - **Flexible scope detection** — review PR changes, uncommitted work, or specific paths
@@ -154,8 +154,18 @@ Platform reviewers are also **automatically included** when the changed files ar
 | `go` | Go idioms, interface design, context propagation | Go Reviewer |
 | `rails` | Rails conventions, ActiveRecord, migration safety | Rails Reviewer |
 | `flutter` | Widget design, state management, Dart idioms | Flutter Reviewer |
+| `java` | Spring Boot, JPA/Hibernate, bean lifecycle | Java Reviewer |
+| `dotnet` | ASP.NET Core, Entity Framework, LINQ, C# idioms | .NET Reviewer |
+| `php` | Laravel, Composer, Eloquent, PHP 8+ features | PHP Reviewer |
+| `cpp` | Modern C++ (11/14/17/20), memory safety, RAII | C/C++ Reviewer |
+| `react-native` | Bridge perf, native modules, platform code paths | React Native Reviewer |
+| `svelte` | Svelte reactivity, SvelteKit routing, compile-time | Svelte Reviewer |
+| `elixir` | OTP/GenServer, Phoenix LiveView, BEAM concurrency | Elixir Reviewer |
+| `kotlin-server` | Ktor, coroutines, Kotlin server-side idioms | Kotlin Server Reviewer |
+| `scala` | Functional patterns, Akka/Spark, effect systems | Scala Reviewer |
 | `mobile` | iOS + Android combined | iOS + Android Platform Reviewers |
 | `ts` | TypeScript frontend + backend combined | Both TypeScript Reviewers |
+| `jvm` | Java + Kotlin Server + Scala combined | All JVM Reviewers |
 
 ## Agents
 
@@ -216,6 +226,24 @@ These agents are automatically included when the team lead determines they are r
 - **Rails Reviewer** - Reviews Ruby on Rails code for Rails conventions, ActiveRecord best practices, migration safety, and background job design.
 
 - **Flutter Reviewer** - Reviews Flutter/Dart code for widget composition, state management patterns, platform channel integration, and Dart idioms.
+
+- **Java Reviewer** - Reviews Java code for Spring Boot patterns, JPA/Hibernate usage, bean lifecycle correctness, concurrency safety, and enterprise architecture best practices.
+
+- **C#/.NET Reviewer** - Reviews C#/.NET code for ASP.NET Core patterns, Entity Framework Core usage, async/await correctness, DI lifetime management, and LINQ best practices.
+
+- **PHP Reviewer** - Reviews PHP code for Laravel patterns, Eloquent ORM usage, Composer dependency management, PHP 8+ idioms, and security best practices.
+
+- **C/C++ Reviewer** - Reviews C/C++ code for modern C++ idioms, memory safety, RAII patterns, STL usage, template correctness, and undefined behavior prevention.
+
+- **React Native Reviewer** - Reviews React Native code for bridge performance, native module integration, platform-specific code paths, and mobile-specific security patterns.
+
+- **Svelte Reviewer** - Reviews Svelte/SvelteKit code for reactivity correctness, SvelteKit routing and data loading, compile-time patterns, and SSR/hydration issues.
+
+- **Elixir Reviewer** - Reviews Elixir code for OTP design patterns, Phoenix/LiveView conventions, Ecto query correctness, BEAM concurrency, and fault tolerance.
+
+- **Kotlin Server Reviewer** - Reviews server-side Kotlin code for coroutine correctness, Ktor/Spring patterns, structured concurrency, and Kotlin idioms.
+
+- **Scala Reviewer** - Reviews Scala code for functional patterns, type system usage, effect system correctness, Akka/Spark patterns, and JVM concurrency safety.
 
 ## Output Format
 
@@ -286,6 +314,15 @@ claude-deep-review/
 │           ├── go-reviewer.md
 │           ├── rails-reviewer.md
 │           ├── flutter-reviewer.md
+│           ├── java-reviewer.md
+│           ├── dotnet-reviewer.md
+│           ├── php-reviewer.md
+│           ├── cpp-reviewer.md
+│           ├── react-native-reviewer.md
+│           ├── svelte-reviewer.md
+│           ├── elixir-reviewer.md
+│           ├── kotlin-server-reviewer.md
+│           ├── scala-reviewer.md
 │           └── synthesizer.md
 ├── README.md
 └── LICENSE
