@@ -1,7 +1,7 @@
 {
   "name": "deep-review",
-  "description": "Comprehensive code review skill with 15 specialized agents for architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, and simplification.",
-  "version": "2.0.0",
+  "description": "Comprehensive code review skill with 24 specialized agents for architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter) with automatic platform detection.",
+  "version": "3.0.0",
   "author": {
     "name": "Iron-Ham"
   },
@@ -14,6 +14,15 @@
     "accessibility",
     "performance",
     "concurrency",
-    "localization"
+    "localization",
+    "ios",
+    "android",
+    "swift",
+    "kotlin",
+    "python",
+    "rust",
+    "go",
+    "rails",
+    "flutter"
   ]
 }

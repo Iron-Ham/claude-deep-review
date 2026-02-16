@@ -4,7 +4,7 @@ A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/e
 
 ## Features
 
-- **15 specialized review agents** running in parallel via team-based orchestration
+- **24 specialized review agents** running in parallel via team-based orchestration
 - **File-based data flow** — agent findings written to files, keeping context windows lightweight
 - **Dedicated synthesis** — a separate agent merges all findings with a fresh context window
 - **Flexible scope detection** — review PR changes, uncommitted work, or specific paths
@@ -67,7 +67,7 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 ### Selecting Review Aspects
 
 ```bash
-# Full review with all 15 agents
+# Full review with all cross-cutting agents (+ auto-detected platforms)
 /deep-review full
 
 # Code quality + error handling only
@@ -86,10 +86,28 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 /deep-review simplify
 ```
 
+### Platform-Specific Reviews
+
+```bash
+# Explicitly include iOS reviewer
+/deep-review ios --pr
+
+# Both TypeScript frontend + backend reviewers
+/deep-review ts --pr
+
+# iOS + Android reviewers
+/deep-review mobile --pr
+
+# Python and Rust reviewers
+/deep-review python rust --pr
+```
+
+Platform reviewers are also **automatically included** when the changed files are relevant to a specific platform. For example, running `/deep-review` on a project with iOS Swift changes will include the iOS reviewer. The system uses its judgment to disambiguate — `.swift` files in a macOS project won't trigger the iOS reviewer, and `.ts` files in an Express app will trigger the backend reviewer, not the frontend one.
+
 ### Combined Examples
 
 ```bash
-# Full review of PR changes
+# Full review of PR changes (+ auto-detected platforms)
 /deep-review full --pr
 
 # Quick core review of uncommitted changes
@@ -110,7 +128,7 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 | Aspect | Description | Agents |
 |--------|-------------|--------|
 | `core` | Essential quality checks (default) | Code Reviewer, Silent Failure Hunter, 5 Architecture agents |
-| `full` | Complete comprehensive review | All 15 agents |
+| `full` | All cross-cutting agents | All 15 cross-cutting agents |
 | `code` | CLAUDE.md compliance, bugs, quality | Code Reviewer |
 | `errors` | Silent failures, catch blocks | Silent Failure Hunter |
 | `arch` | Dependencies, cycles, hotspots, patterns, scale | 5 Architecture agents |
@@ -122,6 +140,22 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 | `l10n` | Hardcoded strings, i18n readiness, locale handling, RTL | Localization Scanner |
 | `concurrency` | Race conditions, deadlocks, thread safety, async pitfalls | Concurrency Analyzer |
 | `perf` | Algorithmic complexity, allocations, caching, rendering, N+1 queries | Performance Analyzer |
+
+**Platform-specific aspects** (automatically included when relevant, or explicitly requested):
+
+| Aspect | Description | Agents |
+|--------|-------------|--------|
+| `ios` | Swift/SwiftUI/UIKit lifecycle, ARC, Apple APIs | iOS Platform Reviewer |
+| `android` | Activity/Fragment lifecycle, Compose, Android security | Android Platform Reviewer |
+| `ts-frontend` | React/Vue/Angular state, SSR/hydration, browser APIs | TypeScript Frontend Reviewer |
+| `ts-backend` | Node.js event loop, middleware, ORM, API design | TypeScript Backend Reviewer |
+| `python` | Pythonic idioms, type hints, Django/FastAPI/Flask | Python Reviewer |
+| `rust` | Ownership idioms, unsafe auditing, trait design | Rust Reviewer |
+| `go` | Go idioms, interface design, context propagation | Go Reviewer |
+| `rails` | Rails conventions, ActiveRecord, migration safety | Rails Reviewer |
+| `flutter` | Widget design, state management, Dart idioms | Flutter Reviewer |
+| `mobile` | iOS + Android combined | iOS + Android Platform Reviewers |
+| `ts` | TypeScript frontend + backend combined | Both TypeScript Reviewers |
 
 ## Agents
 
@@ -161,6 +195,28 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 
 - **Performance Analyzer** - Identifies algorithmic complexity issues, excessive allocations, N+1 queries, rendering bottlenecks, bundle bloat, and missed caching/parallelization opportunities.
 
+### Platform-Specific Agents
+
+These agents are automatically included when the team lead determines they are relevant to the changed files. They can also be explicitly requested.
+
+- **iOS Platform Reviewer** - Reviews Swift/SwiftUI/UIKit code for lifecycle correctness, ARC memory management, Apple API usage, and App Store compliance.
+
+- **Android Platform Reviewer** - Reviews Kotlin/Java Android code for Activity/Fragment lifecycle, Jetpack Compose patterns, manifest configuration, and Play Store compliance.
+
+- **TypeScript Frontend Reviewer** - Reviews React/Vue/Angular code for component design, state management, SSR/hydration correctness, and browser API usage.
+
+- **TypeScript Backend Reviewer** - Reviews Node.js/TypeScript server code for event loop safety, middleware correctness, ORM usage, authentication patterns, and graceful shutdown.
+
+- **Python Reviewer** - Reviews Python code for Pythonic idioms, type hint correctness, Django/FastAPI/Flask patterns, and packaging best practices.
+
+- **Rust Reviewer** - Reviews Rust code for ownership/borrowing idioms, unsafe code auditing, error handling patterns, and trait design.
+
+- **Go Reviewer** - Reviews Go code for idiomatic patterns, interface design, context propagation, goroutine safety, and module hygiene.
+
+- **Rails Reviewer** - Reviews Ruby on Rails code for Rails conventions, ActiveRecord best practices, migration safety, and background job design.
+
+- **Flutter Reviewer** - Reviews Flutter/Dart code for widget composition, state management patterns, platform channel integration, and Dart idioms.
+
 ## Output Format
 
 The skill produces a synthesized report with:
@@ -183,15 +239,17 @@ Individual agent findings are also available in `/tmp/deep-review-*/` for detail
 
 1. **Scope Detection** — Determines which files to analyze based on flags (`--pr`, `--changes`) or path argument
 
-2. **Agent Selection** — Selects which agents to run based on specified aspects
+2. **Platform Detection** — Examines changed files and project context to automatically include relevant platform-specific reviewers (e.g., Swift changes in an iOS project trigger the iOS reviewer)
 
-3. **Team Initialization** — Creates a team and results directory, then spawns all selected agents as teammates in parallel
+3. **Agent Selection** — Selects which agents to run based on specified aspects and detected platforms
 
-4. **Parallel Analysis** — Each agent reads its instructions from a dedicated file, analyzes the code, and writes findings to its own output file in `/tmp/deep-review-*/`
+4. **Team Initialization** — Creates a team and results directory, then spawns all selected agents as teammates in parallel
 
-5. **Synthesis** — A dedicated synthesis agent reads all output files and merges them into a unified, deduplicated report
+5. **Parallel Analysis** — Each agent reads its instructions from a dedicated file, analyzes the code, and writes findings to its own output file in `/tmp/deep-review-*/`
 
-6. **Report & Cleanup** — The final report is presented to the user and the team is cleaned up
+6. **Synthesis** — A dedicated synthesis agent reads all output files and merges them into a unified, deduplicated report
+
+7. **Report & Cleanup** — The final report is presented to the user and the team is cleaned up
 
 ## Project Structure
 
@@ -219,6 +277,15 @@ claude-deep-review/
 │           ├── localization-scanner.md
 │           ├── concurrency-analyzer.md
 │           ├── performance-analyzer.md
+│           ├── ios-platform-reviewer.md
+│           ├── android-platform-reviewer.md
+│           ├── ts-frontend-reviewer.md
+│           ├── ts-backend-reviewer.md
+│           ├── python-reviewer.md
+│           ├── rust-reviewer.md
+│           ├── go-reviewer.md
+│           ├── rails-reviewer.md
+│           ├── flutter-reviewer.md
 │           └── synthesizer.md
 ├── README.md
 └── LICENSE
@@ -231,6 +298,8 @@ claude-deep-review/
 - Use `full` before major merges or releases
 - **Focus on [NEW] issues** - these must be fixed before merge
 - **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
+- Platform reviewers are automatically included when relevant — no need to specify `ios`, `python`, etc. manually
+- Use `mobile`, `ts`, or explicit platform names to force platform reviewers when needed
 - Re-run after fixes to verify resolution
 
 ## License
