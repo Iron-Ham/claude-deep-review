@@ -1,6 +1,6 @@
 {
   "name": "deep-review",
-  "description": "Comprehensive code review skill with 24 specialized agents for architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter) with automatic platform detection.",
+  "description": "Comprehensive code review skill with 33 specialized agents for architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala) with automatic platform detection.",
   "version": "3.0.0",
   "author": {
     "name": "Iron-Ham"
@@ -23,6 +23,17 @@
     "rust",
     "go",
     "rails",
-    "flutter"
+    "flutter",
+    "java",
+    "spring-boot",
+    "csharp",
+    "dotnet",
+    "php",
+    "laravel",
+    "cpp",
+    "react-native",
+    "svelte",
+    "elixir",
+    "scala"
   ]
 }

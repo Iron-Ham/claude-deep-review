@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
@@ -77,8 +77,18 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `go` | Go idioms, interface design, context propagation, module hygiene |
 | `rails` | Rails conventions, ActiveRecord, migration safety, background jobs |
 | `flutter` | Widget design, state management, Dart idioms, platform channels |
+| `java` | Spring Boot, JPA/Hibernate, bean lifecycle, enterprise patterns |
+| `dotnet` | ASP.NET Core, Entity Framework, LINQ, C# idioms |
+| `php` | Laravel, Composer, Eloquent, Blade, PHP 8+ features |
+| `cpp` | Modern C++ (11/14/17/20), memory safety, RAII, STL, templates |
+| `react-native` | Bridge perf, native modules, platform-specific code paths |
+| `svelte` | Svelte reactivity, SvelteKit routing, compile-time patterns |
+| `elixir` | OTP/GenServer, Phoenix LiveView, BEAM concurrency |
+| `kotlin-server` | Ktor, coroutines, Kotlin idioms for server-side |
+| `scala` | Functional patterns, Akka/Spark, implicits, effect systems |
 | `mobile` | ios + android |
 | `ts` | ts-frontend + ts-backend |
+| `jvm` | java + kotlin-server + scala |
 
 Platform reviewers are **automatically included** when the team lead determines they are relevant based on the changed files and project context. For example, changing `.swift` files in an iOS project will include the iOS reviewer. The team lead uses its judgment to disambiguate — `.swift` in a macOS project won't trigger iOS, `.kt` in a Ktor server won't trigger Android. Users can also explicitly request platform aspects (e.g., `/deep-review ios`). Platform aspects are never included in `core` or `full` unless detected or explicitly requested.
 
@@ -129,6 +139,15 @@ Platform reviewers are **automatically included** when the team lead determines 
 | go-reviewer | go | inherit | agents/go-reviewer.md |
 | rails-reviewer | rails | inherit | agents/rails-reviewer.md |
 | flutter-reviewer | flutter | inherit | agents/flutter-reviewer.md |
+| java-reviewer | java | inherit | agents/java-reviewer.md |
+| dotnet-reviewer | dotnet | inherit | agents/dotnet-reviewer.md |
+| php-reviewer | php | inherit | agents/php-reviewer.md |
+| cpp-reviewer | cpp | inherit | agents/cpp-reviewer.md |
+| react-native-reviewer | react-native | inherit | agents/react-native-reviewer.md |
+| svelte-reviewer | svelte | inherit | agents/svelte-reviewer.md |
+| elixir-reviewer | elixir | inherit | agents/elixir-reviewer.md |
+| kotlin-server-reviewer | kotlin-server | inherit | agents/kotlin-server-reviewer.md |
+| scala-reviewer | scala | inherit | agents/scala-reviewer.md |
 
 All teammates use `subagent_type: "general-purpose"` (needed for file writing).
 
@@ -191,6 +210,15 @@ After obtaining the list of changed files, determine which platform-specific rev
 | `go` | Go idioms, interface design, context propagation, module hygiene |
 | `rails` | Rails conventions, ActiveRecord, migration safety, background jobs |
 | `flutter` | Widget design, state management, Dart idioms, platform channels |
+| `java` | Spring Boot, JPA/Hibernate, bean lifecycle, enterprise patterns |
+| `dotnet` | ASP.NET Core, Entity Framework, LINQ, C# idioms |
+| `php` | Laravel, Composer, Eloquent, Blade, PHP 8+ features |
+| `cpp` | Modern C++ (11/14/17/20), memory safety, RAII, STL, templates |
+| `react-native` | Bridge perf, native modules, platform-specific code paths |
+| `svelte` | Svelte reactivity, SvelteKit routing, compile-time patterns |
+| `elixir` | OTP/GenServer, Phoenix LiveView, BEAM concurrency |
+| `kotlin-server` | Ktor, coroutines, Kotlin idioms for server-side |
+| `scala` | Functional patterns, Akka/Spark, implicits, effect systems |
 
 **If the user explicitly requested platform aspects** (e.g., `/deep-review ios`, `/deep-review python rust`), use those directly.
 
@@ -199,6 +227,7 @@ After obtaining the list of changed files, determine which platform-specific rev
 **Group alias expansion**:
 - `mobile` → `ios`, `android`
 - `ts` → `ts-frontend`, `ts-backend`
+- `jvm` → `java`, `kotlin-server`, `scala`
 
 **Merge behavior**:
 - Platform aspects are **added to** whatever cross-cutting aspects the user requested
@@ -233,6 +262,15 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `go` | Go Reviewer |
 | `rails` | Rails Reviewer |
 | `flutter` | Flutter Reviewer |
+| `java` | Java Reviewer |
+| `dotnet` | .NET Reviewer |
+| `php` | PHP Reviewer |
+| `cpp` | C/C++ Reviewer |
+| `react-native` | React Native Reviewer |
+| `svelte` | Svelte Reviewer |
+| `elixir` | Elixir Reviewer |
+| `kotlin-server` | Kotlin Server Reviewer |
+| `scala` | Scala Reviewer |
 
 ### Phase 3: Initialize Team and Launch Teammates
 
