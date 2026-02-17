@@ -4,7 +4,7 @@ A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/e
 
 ## Features
 
-- **33 specialized review agents** running in parallel via team-based orchestration
+- **45 specialized review agents** running in parallel via team-based orchestration
 - **File-based data flow** — agent findings written to files, keeping context windows lightweight
 - **Dedicated synthesis** — a separate agent merges all findings with a fresh context window
 - **Flexible scope detection** — review PR changes, uncommitted work, or specific paths
@@ -92,17 +92,41 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 # Explicitly include iOS reviewer
 /deep-review ios --pr
 
+# iOS + macOS reviewers
+/deep-review apple --pr
+
 # Both TypeScript frontend + backend reviewers
 /deep-review ts --pr
 
 # iOS + Android reviewers
 /deep-review mobile --pr
 
+# Next.js reviewer (Server Components, App Router)
+/deep-review nextjs --pr
+
+# Vue.js reviewer (Composition API, Nuxt)
+/deep-review vue --pr
+
+# Django reviewer (ORM, DRF, migrations)
+/deep-review django --pr
+
+# Angular reviewer (RxJS, DI, change detection)
+/deep-review angular --pr
+
+# Docker + Kubernetes reviewers
+/deep-review containers --pr
+
+# GraphQL reviewer (schema, resolvers, security)
+/deep-review graphql --pr
+
+# Terraform + Shell reviewers
+/deep-review infra --pr
+
 # Python and Rust reviewers
 /deep-review python rust --pr
 ```
 
-Platform reviewers are also **automatically included** when the changed files are relevant to a specific platform. For example, running `/deep-review` on a project with iOS Swift changes will include the iOS reviewer. The system uses its judgment to disambiguate — `.swift` files in a macOS project won't trigger the iOS reviewer, and `.ts` files in an Express app will trigger the backend reviewer, not the frontend one.
+Platform reviewers are also **automatically included** when the changed files are relevant to a specific platform. For example, running `/deep-review` on a project with iOS Swift changes will include the iOS reviewer. The system uses its judgment to disambiguate — `.swift` files in a macOS project trigger the macOS reviewer (not iOS), `.vue` files trigger the Vue reviewer, `angular.json` projects trigger Angular, `Dockerfile` changes trigger Docker, K8s manifests trigger Kubernetes, `.graphql` files trigger GraphQL, `.github/workflows/*.yml` changes trigger GitHub Actions, and `.ts` files in an Express app trigger the backend reviewer (not the frontend one).
 
 ### Combined Examples
 
@@ -128,7 +152,7 @@ Platform reviewers are also **automatically included** when the changed files ar
 | Aspect | Description | Agents |
 |--------|-------------|--------|
 | `core` | Essential quality checks (default) | Code Reviewer, Silent Failure Hunter, 5 Architecture agents |
-| `full` | All cross-cutting agents | All 15 cross-cutting agents |
+| `full` | All cross-cutting agents | All cross-cutting agents |
 | `code` | CLAUDE.md compliance, bugs, quality | Code Reviewer |
 | `errors` | Silent failures, catch blocks | Silent Failure Hunter |
 | `arch` | Dependencies, cycles, hotspots, patterns, scale | 5 Architecture agents |
@@ -163,9 +187,24 @@ Platform reviewers are also **automatically included** when the changed files ar
 | `elixir` | OTP/GenServer, Phoenix LiveView, BEAM concurrency | Elixir Reviewer |
 | `kotlin-server` | Ktor, coroutines, Kotlin server-side idioms | Kotlin Server Reviewer |
 | `scala` | Functional patterns, Akka/Spark, effect systems | Scala Reviewer |
+| `macos` | AppKit, SwiftUI for macOS, sandboxing, XPC, notarization | macOS Platform Reviewer |
+| `nextjs` | Server/Client Components, App Router, caching, Server Actions | Next.js Reviewer |
+| `vue` | Vue 3 Composition API, Nuxt 3, Pinia, reactivity | Vue.js Reviewer |
+| `django` | Django ORM, DRF, migrations, template security | Django Reviewer |
+| `ruby` | Ruby idioms, metaprogramming safety, gem hygiene | Ruby Reviewer |
+| `terraform` | HCL, state management, IAM security, module design | Terraform Reviewer |
+| `shell` | Bash/POSIX sh quoting, error handling, portability | Shell/Bash Reviewer |
+| `angular` | Angular DI, RxJS, change detection, signals, templates | Angular Reviewer |
+| `docker` | Dockerfile layers, multi-stage builds, security, Compose | Docker Reviewer |
+| `kubernetes` | K8s manifests, resource limits, RBAC, probes, Helm | Kubernetes Reviewer |
+| `graphql` | Schema design, resolver N+1, query security, DataLoader | GraphQL Reviewer |
+| `github-actions` | Workflow security, secret handling, action pinning | GitHub Actions Reviewer |
 | `mobile` | iOS + Android combined | iOS + Android Platform Reviewers |
+| `apple` | iOS + macOS combined | iOS + macOS Platform Reviewers |
 | `ts` | TypeScript frontend + backend combined | Both TypeScript Reviewers |
 | `jvm` | Java + Kotlin Server + Scala combined | All JVM Reviewers |
+| `infra` | Infrastructure as Code | Terraform + Shell Reviewers |
+| `containers` | Container orchestration | Docker + Kubernetes Reviewers |
 
 ## Agents
 
@@ -211,13 +250,23 @@ These agents are automatically included when the team lead determines they are r
 
 - **iOS Platform Reviewer** - Reviews Swift/SwiftUI/UIKit code for lifecycle correctness, ARC memory management, Apple API usage, and App Store compliance.
 
+- **macOS Platform Reviewer** - Reviews macOS code for AppKit lifecycle, SwiftUI for macOS patterns, sandboxing and entitlements, XPC service design, notarization, and desktop integration.
+
 - **Android Platform Reviewer** - Reviews Kotlin/Java Android code for Activity/Fragment lifecycle, Jetpack Compose patterns, manifest configuration, and Play Store compliance.
 
 - **TypeScript Frontend Reviewer** - Reviews React/Vue/Angular code for component design, state management, SSR/hydration correctness, and browser API usage.
 
 - **TypeScript Backend Reviewer** - Reviews Node.js/TypeScript server code for event loop safety, middleware correctness, ORM usage, authentication patterns, and graceful shutdown.
 
+- **Next.js Reviewer** - Reviews Next.js code for Server/Client Component boundaries, App Router patterns, caching strategies, Server Actions security, middleware, and performance optimizations.
+
+- **Vue.js Reviewer** - Reviews Vue 3 code for Composition API patterns, reactivity correctness, Nuxt 3 conventions, Pinia state management, template safety, and component design.
+
 - **Python Reviewer** - Reviews Python code for Pythonic idioms, type hint correctness, Django/FastAPI/Flask patterns, and packaging best practices.
+
+- **Django Reviewer** - Reviews Django code for ORM query efficiency, migration safety, view security, Django REST Framework patterns, template security, and settings configuration.
+
+- **Ruby Reviewer** - Reviews Ruby code for idiomatic patterns, metaprogramming safety, gem dependency hygiene, RSpec/Minitest testing patterns, and memory management.
 
 - **Rust Reviewer** - Reviews Rust code for ownership/borrowing idioms, unsafe code auditing, error handling patterns, and trait design.
 
@@ -244,6 +293,20 @@ These agents are automatically included when the team lead determines they are r
 - **Kotlin Server Reviewer** - Reviews server-side Kotlin code for coroutine correctness, Ktor/Spring patterns, structured concurrency, and Kotlin idioms.
 
 - **Scala Reviewer** - Reviews Scala code for functional patterns, type system usage, effect system correctness, Akka/Spark patterns, and JVM concurrency safety.
+
+- **Terraform Reviewer** - Reviews Terraform/HCL code for resource configuration correctness, state management safety, IAM and security posture, module design patterns, and blast radius control.
+
+- **Shell/Bash Reviewer** - Reviews shell scripts for quoting correctness, error handling (`set -euo pipefail`), security (command injection), portability (Bash vs POSIX sh), and CI/CD script safety.
+
+- **Angular Reviewer** - Reviews Angular code for dependency injection patterns, RxJS observable management, change detection strategy, template safety, signals migration, and routing configuration.
+
+- **Docker Reviewer** - Reviews Dockerfiles and Compose files for layer ordering, multi-stage build patterns, security posture (non-root, secrets in layers), PID 1 signal handling, and image supply chain.
+
+- **Kubernetes Reviewer** - Reviews Kubernetes manifests and Helm charts for resource limits, security contexts, RBAC configuration, health probes, pod disruption budgets, and deployment strategies.
+
+- **GraphQL Reviewer** - Reviews GraphQL schemas and resolvers for N+1 query patterns, DataLoader usage, query depth/complexity security, field-level authorization, and schema evolution safety.
+
+- **GitHub Actions Reviewer** - Reviews GitHub Actions workflows for security vulnerabilities (`pull_request_target`, expression injection, unpinned actions), secret handling, permissions scoping, and pipeline reliability.
 
 ## Output Format
 
@@ -306,10 +369,15 @@ claude-deep-review/
 │           ├── concurrency-analyzer.md
 │           ├── performance-analyzer.md
 │           ├── ios-platform-reviewer.md
+│           ├── macos-platform-reviewer.md
 │           ├── android-platform-reviewer.md
 │           ├── ts-frontend-reviewer.md
 │           ├── ts-backend-reviewer.md
+│           ├── nextjs-reviewer.md
+│           ├── vue-reviewer.md
 │           ├── python-reviewer.md
+│           ├── django-reviewer.md
+│           ├── ruby-reviewer.md
 │           ├── rust-reviewer.md
 │           ├── go-reviewer.md
 │           ├── rails-reviewer.md
@@ -323,6 +391,13 @@ claude-deep-review/
 │           ├── elixir-reviewer.md
 │           ├── kotlin-server-reviewer.md
 │           ├── scala-reviewer.md
+│           ├── terraform-reviewer.md
+│           ├── shell-reviewer.md
+│           ├── angular-reviewer.md
+│           ├── docker-reviewer.md
+│           ├── kubernetes-reviewer.md
+│           ├── graphql-reviewer.md
+│           ├── github-actions-reviewer.md
 │           └── synthesizer.md
 ├── README.md
 └── LICENSE
@@ -336,7 +411,7 @@ claude-deep-review/
 - **Focus on [NEW] issues** - these must be fixed before merge
 - **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
 - Platform reviewers are automatically included when relevant — no need to specify `ios`, `python`, etc. manually
-- Use `mobile`, `ts`, or explicit platform names to force platform reviewers when needed
+- Use `mobile`, `apple`, `ts`, `jvm`, `infra`, `containers`, or explicit platform names to force platform reviewers when needed
 - Re-run after fixes to verify resolution
 
 ## License

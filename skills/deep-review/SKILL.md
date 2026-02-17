@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, Android, TypeScript, Python, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
@@ -86,11 +86,26 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `elixir` | OTP/GenServer, Phoenix LiveView, BEAM concurrency |
 | `kotlin-server` | Ktor, coroutines, Kotlin idioms for server-side |
 | `scala` | Functional patterns, Akka/Spark, implicits, effect systems |
+| `macos` | AppKit, SwiftUI for macOS, sandboxing, XPC, notarization, desktop integration |
+| `nextjs` | Server/Client Components, App Router, caching, Server Actions, middleware |
+| `vue` | Vue 3 Composition API, Nuxt 3, Pinia, reactivity patterns, template syntax |
+| `django` | Django ORM, DRF, migrations, template security, middleware, signals |
+| `ruby` | Ruby idioms, metaprogramming safety, gem hygiene, RSpec/Minitest patterns |
+| `terraform` | HCL, state management, IAM security, module design, blast radius control |
+| `shell` | Bash/POSIX sh quoting, error handling, portability, CI/CD script safety |
+| `angular` | Angular DI, RxJS, change detection, signals, template safety |
+| `docker` | Dockerfile layers, multi-stage builds, security, PID 1, Compose |
+| `kubernetes` | K8s manifests, resource limits, security contexts, RBAC, probes, Helm |
+| `graphql` | Schema design, resolver N+1, query security, authorization, DataLoader |
+| `github-actions` | Workflow security, secret handling, action pinning, runner config |
 | `mobile` | ios + android |
 | `ts` | ts-frontend + ts-backend |
 | `jvm` | java + kotlin-server + scala |
+| `apple` | ios + macos |
+| `infra` | terraform + shell |
+| `containers` | docker + kubernetes |
 
-Platform reviewers are **automatically included** when the team lead determines they are relevant based on the changed files and project context. For example, changing `.swift` files in an iOS project will include the iOS reviewer. The team lead uses its judgment to disambiguate — `.swift` in a macOS project won't trigger iOS, `.kt` in a Ktor server won't trigger Android. Users can also explicitly request platform aspects (e.g., `/deep-review ios`). Platform aspects are never included in `core` or `full` unless detected or explicitly requested.
+Platform reviewers are **automatically included** when the team lead determines they are relevant based on the changed files and project context. For example, changing `.swift` files in an iOS project will include the iOS reviewer. The team lead uses its judgment to disambiguate — `.swift` in a macOS project triggers macOS (not iOS), `.kt` in a Ktor server won't trigger Android, `.py` in a Django project triggers django (not just python), `.vue` files trigger vue (not ts-frontend), Next.js projects trigger nextjs (not just ts-frontend). Users can also explicitly request platform aspects (e.g., `/deep-review ios`). Platform aspects are never included in `core` or `full` unless detected or explicitly requested.
 
 **Usage examples:**
 ```
@@ -105,8 +120,16 @@ Platform reviewers are **automatically included** when the team lead determines 
 /deep-review concurrency --pr   # concurrency analysis of PR
 /deep-review perf --pr          # performance analysis of PR
 /deep-review ios --pr           # explicitly include iOS reviewer
+/deep-review apple --pr         # iOS + macOS reviewers
 /deep-review ts --pr            # both TypeScript frontend + backend reviewers
 /deep-review mobile --pr        # iOS + Android reviewers
+/deep-review nextjs --pr        # Next.js reviewer (Server Components, App Router)
+/deep-review vue --pr           # Vue.js reviewer (Composition API, Nuxt)
+/deep-review django --pr        # Django reviewer (ORM, DRF, migrations)
+/deep-review angular --pr       # Angular reviewer (RxJS, DI, change detection)
+/deep-review containers --pr    # Docker + Kubernetes reviewers
+/deep-review graphql --pr       # GraphQL reviewer (schema, resolvers, security)
+/deep-review infra --pr         # Terraform + Shell reviewers
 /deep-review python rust --pr   # explicitly include Python and Rust reviewers
 /deep-review src/features       # analyze specific path (+ auto-detected platforms)
 ```
@@ -148,6 +171,18 @@ Platform reviewers are **automatically included** when the team lead determines 
 | elixir-reviewer | elixir | inherit | agents/elixir-reviewer.md |
 | kotlin-server-reviewer | kotlin-server | inherit | agents/kotlin-server-reviewer.md |
 | scala-reviewer | scala | inherit | agents/scala-reviewer.md |
+| macos-platform-reviewer | macos | inherit | agents/macos-platform-reviewer.md |
+| nextjs-reviewer | nextjs | inherit | agents/nextjs-reviewer.md |
+| vue-reviewer | vue | inherit | agents/vue-reviewer.md |
+| django-reviewer | django | inherit | agents/django-reviewer.md |
+| ruby-reviewer | ruby | inherit | agents/ruby-reviewer.md |
+| terraform-reviewer | terraform | inherit | agents/terraform-reviewer.md |
+| shell-reviewer | shell | inherit | agents/shell-reviewer.md |
+| angular-reviewer | angular | inherit | agents/angular-reviewer.md |
+| docker-reviewer | docker | inherit | agents/docker-reviewer.md |
+| kubernetes-reviewer | kubernetes | inherit | agents/kubernetes-reviewer.md |
+| graphql-reviewer | graphql | inherit | agents/graphql-reviewer.md |
+| github-actions-reviewer | github-actions | inherit | agents/github-actions-reviewer.md |
 
 All teammates use `subagent_type: "general-purpose"` (needed for file writing).
 
@@ -202,10 +237,15 @@ After obtaining the list of changed files, determine which platform-specific rev
 | Aspect | Covers |
 |--------|--------|
 | `ios` | Swift/SwiftUI/UIKit lifecycle, ARC, Apple APIs, App Store compliance |
+| `macos` | AppKit, SwiftUI for macOS, sandboxing, XPC, notarization, desktop integration |
 | `android` | Activity/Fragment lifecycle, Compose, manifest, Android security |
 | `ts-frontend` | React/Vue/Angular state, SSR/hydration, component patterns, browser APIs |
 | `ts-backend` | Node.js event loop, middleware, ORM, auth, graceful shutdown, API design |
+| `nextjs` | Server/Client Components, App Router, caching, Server Actions, middleware |
+| `vue` | Vue 3 Composition API, Nuxt 3, Pinia, reactivity patterns, template syntax |
 | `python` | Pythonic idioms, type hints, Django/FastAPI/Flask, packaging |
+| `django` | Django ORM, DRF, migrations, template security, middleware, signals |
+| `ruby` | Ruby idioms, metaprogramming safety, gem hygiene, RSpec/Minitest patterns |
 | `rust` | Ownership idioms, unsafe auditing, error handling, trait design |
 | `go` | Go idioms, interface design, context propagation, module hygiene |
 | `rails` | Rails conventions, ActiveRecord, migration safety, background jobs |
@@ -219,15 +259,25 @@ After obtaining the list of changed files, determine which platform-specific rev
 | `elixir` | OTP/GenServer, Phoenix LiveView, BEAM concurrency |
 | `kotlin-server` | Ktor, coroutines, Kotlin idioms for server-side |
 | `scala` | Functional patterns, Akka/Spark, implicits, effect systems |
+| `terraform` | HCL, state management, IAM security, module design, blast radius control |
+| `shell` | Bash/POSIX sh quoting, error handling, portability, CI/CD script safety |
+| `angular` | Angular DI, RxJS, change detection, signals, template safety |
+| `docker` | Dockerfile layers, multi-stage builds, security, PID 1, Compose |
+| `kubernetes` | K8s manifests, resource limits, security contexts, RBAC, probes, Helm |
+| `graphql` | Schema design, resolver N+1, query security, authorization, DataLoader |
+| `github-actions` | Workflow security, secret handling, action pinning, runner config |
 
 **If the user explicitly requested platform aspects** (e.g., `/deep-review ios`, `/deep-review python rust`), use those directly.
 
-**If the user did not request any platform aspects**, look at the changed files and the project context to decide which platform reviewers are relevant. Use your judgment — examine file extensions, imports, build files, and project structure to determine the right reviewers. Be precise: `.swift` files in a macOS project should not trigger the iOS reviewer, `.kt` files in a Ktor server should not trigger Android, `.ts` files in an Express app should trigger `ts-backend` not `ts-frontend`, etc. When genuinely uncertain, skip rather than guess wrong — the user can always request a platform reviewer explicitly.
+**If the user did not request any platform aspects**, look at the changed files and the project context to decide which platform reviewers are relevant. Use your judgment — examine file extensions, imports, build files, and project structure to determine the right reviewers. Be precise: `.swift` files in a macOS project should trigger macOS (not iOS), `.kt` files in a Ktor server should not trigger Android, `.ts` files in an Express app should trigger `ts-backend` not `ts-frontend`, `.vue` files should trigger `vue` (not `ts-frontend`), projects with `next.config.*` should trigger `nextjs`, projects with Django's `settings.py`/`manage.py` should trigger `django`, `.tf` files should trigger `terraform`, `.sh`/`.bash` files should trigger `shell`, Angular projects (`angular.json`) should trigger `angular`, `Dockerfile`/`docker-compose.yml` should trigger `docker`, K8s manifests (YAML with `apiVersion`/`kind`) should trigger `kubernetes`, `.graphql`/`.gql` files or GraphQL schema definitions should trigger `graphql`, `.github/workflows/*.yml` files should trigger `github-actions`. When genuinely uncertain, skip rather than guess wrong — the user can always request a platform reviewer explicitly.
 
 **Group alias expansion**:
 - `mobile` → `ios`, `android`
 - `ts` → `ts-frontend`, `ts-backend`
 - `jvm` → `java`, `kotlin-server`, `scala`
+- `apple` → `ios`, `macos`
+- `infra` → `terraform`, `shell`
+- `containers` → `docker`, `kubernetes`
 
 **Merge behavior**:
 - Platform aspects are **added to** whatever cross-cutting aspects the user requested
@@ -254,10 +304,15 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `concurrency` | Concurrency Analyzer |
 | `perf` | Performance Analyzer |
 | `ios` | iOS Platform Reviewer |
+| `macos` | macOS Platform Reviewer |
 | `android` | Android Platform Reviewer |
 | `ts-frontend` | TypeScript Frontend Reviewer |
 | `ts-backend` | TypeScript Backend Reviewer |
+| `nextjs` | Next.js Reviewer |
+| `vue` | Vue.js Reviewer |
 | `python` | Python Reviewer |
+| `django` | Django Reviewer |
+| `ruby` | Ruby Reviewer |
 | `rust` | Rust Reviewer |
 | `go` | Go Reviewer |
 | `rails` | Rails Reviewer |
@@ -271,6 +326,13 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `elixir` | Elixir Reviewer |
 | `kotlin-server` | Kotlin Server Reviewer |
 | `scala` | Scala Reviewer |
+| `terraform` | Terraform Reviewer |
+| `shell` | Shell/Bash Reviewer |
+| `angular` | Angular Reviewer |
+| `docker` | Docker Reviewer |
+| `kubernetes` | Kubernetes Reviewer |
+| `graphql` | GraphQL Reviewer |
+| `github-actions` | GitHub Actions Reviewer |
 
 ### Phase 3: Initialize Team and Launch Teammates
 
