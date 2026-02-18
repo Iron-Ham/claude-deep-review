@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions, SQL, Swift Data). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
@@ -98,6 +98,8 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `kubernetes` | K8s manifests, resource limits, security contexts, RBAC, probes, Helm |
 | `graphql` | Schema design, resolver N+1, query security, authorization, DataLoader |
 | `github-actions` | Workflow security, secret handling, action pinning, runner config |
+| `sql` | SQL query optimization, schema design, migration safety, injection, ORM fallback |
+| `swift-data` | SwiftData, Core Data, GRDB persistence patterns, migrations, concurrency |
 | `mobile` | ios + android |
 | `ts` | ts-frontend + ts-backend |
 | `jvm` | java + kotlin-server + scala |
@@ -105,7 +107,7 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `infra` | terraform + shell |
 | `containers` | docker + kubernetes |
 
-Platform reviewers are **automatically included** when the team lead determines they are relevant based on the changed files and project context. For example, changing `.swift` files in an iOS project will include the iOS reviewer. The team lead uses its judgment to disambiguate — `.swift` in a macOS project triggers macOS (not iOS), `.kt` in a Ktor server won't trigger Android, `.py` in a Django project triggers django (not just python), `.vue` files trigger vue (not ts-frontend), Next.js projects trigger nextjs (not just ts-frontend). Users can also explicitly request platform aspects (e.g., `/deep-review ios`). Platform aspects are never included in `core` or `full` unless detected or explicitly requested.
+Platform reviewers are **automatically included** when the team lead determines they are relevant based on the changed files and project context. For example, changing `.swift` files in an iOS project will include the iOS reviewer. The team lead uses its judgment to disambiguate — `.swift` in a macOS project triggers macOS (not iOS), `.kt` in a Ktor server won't trigger Android, `.py` in a Django project triggers django (not just python), `.vue` files trigger vue (not ts-frontend), Next.js projects trigger nextjs (not just ts-frontend), `.sql` files trigger sql, Swift projects using SwiftData/CoreData/GRDB trigger swift-data. Users can also explicitly request platform aspects (e.g., `/deep-review ios`). Platform aspects are never included in `core` or `full` unless detected or explicitly requested.
 
 **Usage examples:**
 ```
@@ -131,6 +133,8 @@ Platform reviewers are **automatically included** when the team lead determines 
 /deep-review graphql --pr       # GraphQL reviewer (schema, resolvers, security)
 /deep-review infra --pr         # Terraform + Shell reviewers
 /deep-review python rust --pr   # explicitly include Python and Rust reviewers
+/deep-review sql --pr           # SQL reviewer (queries, schema, migrations, injection)
+/deep-review swift-data --pr    # Swift Data reviewer (SwiftData, Core Data, GRDB)
 /deep-review src/features       # analyze specific path (+ auto-detected platforms)
 ```
 
@@ -183,6 +187,8 @@ Platform reviewers are **automatically included** when the team lead determines 
 | kubernetes-reviewer | kubernetes | inherit | agents/kubernetes-reviewer.md |
 | graphql-reviewer | graphql | inherit | agents/graphql-reviewer.md |
 | github-actions-reviewer | github-actions | inherit | agents/github-actions-reviewer.md |
+| sql-reviewer | sql | inherit | agents/sql-reviewer.md |
+| swift-data-reviewer | swift-data | inherit | agents/swift-data-reviewer.md |
 
 All agents use `subagent_type: "general-purpose"` (needed for file writing).
 
@@ -266,10 +272,12 @@ After obtaining the list of changed files, determine which platform-specific rev
 | `kubernetes` | K8s manifests, resource limits, security contexts, RBAC, probes, Helm |
 | `graphql` | Schema design, resolver N+1, query security, authorization, DataLoader |
 | `github-actions` | Workflow security, secret handling, action pinning, runner config |
+| `sql` | SQL query optimization, schema design, migration safety, injection, ORM fallback |
+| `swift-data` | SwiftData, Core Data, GRDB persistence patterns, migrations, concurrency |
 
 **If the user explicitly requested platform aspects** (e.g., `/deep-review ios`, `/deep-review python rust`), use those directly.
 
-**If the user did not request any platform aspects**, look at the changed files and the project context to decide which platform reviewers are relevant. Use your judgment — examine file extensions, imports, build files, and project structure to determine the right reviewers. Be precise: `.swift` files in a macOS project should trigger macOS (not iOS), `.kt` files in a Ktor server should not trigger Android, `.ts` files in an Express app should trigger `ts-backend` not `ts-frontend`, `.vue` files should trigger `vue` (not `ts-frontend`), projects with `next.config.*` should trigger `nextjs`, projects with Django's `settings.py`/`manage.py` should trigger `django`, `.tf` files should trigger `terraform`, `.sh`/`.bash` files should trigger `shell`, Angular projects (`angular.json`) should trigger `angular`, `Dockerfile`/`docker-compose.yml` should trigger `docker`, K8s manifests (YAML with `apiVersion`/`kind`) should trigger `kubernetes`, `.graphql`/`.gql` files or GraphQL schema definitions should trigger `graphql`, `.github/workflows/*.yml` files should trigger `github-actions`. When genuinely uncertain, skip rather than guess wrong — the user can always request a platform reviewer explicitly.
+**If the user did not request any platform aspects**, look at the changed files and the project context to decide which platform reviewers are relevant. Use your judgment — examine file extensions, imports, build files, and project structure to determine the right reviewers. Be precise: `.swift` files in a macOS project should trigger macOS (not iOS), `.kt` files in a Ktor server should not trigger Android, `.ts` files in an Express app should trigger `ts-backend` not `ts-frontend`, `.vue` files should trigger `vue` (not `ts-frontend`), projects with `next.config.*` should trigger `nextjs`, projects with Django's `settings.py`/`manage.py` should trigger `django`, `.tf` files should trigger `terraform`, `.sh`/`.bash` files should trigger `shell`, Angular projects (`angular.json`) should trigger `angular`, `Dockerfile`/`docker-compose.yml` should trigger `docker`, K8s manifests (YAML with `apiVersion`/`kind`) should trigger `kubernetes`, `.graphql`/`.gql` files or GraphQL schema definitions should trigger `graphql`, `.github/workflows/*.yml` files should trigger `github-actions`, `.sql` files or SQL migration directories should trigger `sql`, Swift projects with SwiftData imports (`import SwiftData`), `.xcdatamodeld` directories (Core Data), or GRDB imports (`import GRDB`) should trigger `swift-data`. The `sql` reviewer also acts as a fallback for ORM patterns not covered by a dedicated framework reviewer — if the project uses an ORM like Sequelize, Prisma, SQLAlchemy, Knex, or Diesel without a framework-specific reviewer, include `sql`. When genuinely uncertain, skip rather than guess wrong — the user can always request a platform reviewer explicitly.
 
 **Group alias expansion**:
 - `mobile` → `ios`, `android`
@@ -333,6 +341,8 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `kubernetes` | Kubernetes Reviewer |
 | `graphql` | GraphQL Reviewer |
 | `github-actions` | GitHub Actions Reviewer |
+| `sql` | SQL Reviewer |
+| `swift-data` | Swift Data Reviewer |
 
 ### Phase 3: Create Results Directory and Launch Background Agents
 
