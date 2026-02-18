@@ -184,7 +184,7 @@ Platform reviewers are **automatically included** when the team lead determines 
 | graphql-reviewer | graphql | inherit | agents/graphql-reviewer.md |
 | github-actions-reviewer | github-actions | inherit | agents/github-actions-reviewer.md |
 
-All teammates use `subagent_type: "general-purpose"` (needed for file writing).
+All agents use `subagent_type: "general-purpose"` (needed for file writing).
 
 ## Instructions
 
@@ -334,7 +334,7 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `graphql` | GraphQL Reviewer |
 | `github-actions` | GitHub Actions Reviewer |
 
-### Phase 3: Initialize Team and Launch Teammates
+### Phase 3: Create Results Directory and Launch Background Agents
 
 1. **Create results directory**:
    ```bash
@@ -342,38 +342,44 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
    ```
    Store the path as `REVIEW_DIR`.
 
-2. **Create the team**:
-   Use `TeamCreate` with name `"deep-review"`.
-
-3. **Create tasks** for each selected agent:
-   Use `TaskCreate` for each agent with:
-   - Subject: `"Run {agent-display-name} analysis"`
-   - Description: includes the output file path `{REVIEW_DIR}/{agent-id}.md`
-
-4. **Spawn all analysis teammates in parallel**:
-   For each selected agent, use the Task tool:
+2. **Spawn all analysis agents in parallel as background tasks**:
+   Use a **single message** with multiple Task tool calls (one per agent) so they all launch concurrently:
    - `subagent_type`: `"general-purpose"`
    - `model`: from dispatch table (`opus` or omit for inherit)
-   - `team_name`: `"deep-review"`
-   - `name`: `"{agent-id}"` (e.g., `"code-reviewer"`, `"cycle-detector"`)
-   - `prompt`: use the Teammate Prompt Template below, filled in with the agent's details
+   - `run_in_background`: `true`
+   - `prompt`: use the Agent Prompt Template below, filled in with the agent's details
+   - Do NOT use `team_name` or `name` — these are standalone background agents, NOT team members
 
-### Phase 4: Monitor Task Completion
+   Each Task call returns immediately with a `task_id`. Store the mapping of `{agent-id → task_id}`.
 
-1. Wait for summary messages from all teammates (they will send a brief message via SendMessage when done)
-2. Verify via `TaskList` that all analysis tasks show `"completed"`
-3. For any tasks that did not complete, check if the output file exists anyway (partial findings are still valuable)
-4. Build a gap report string listing any agents that failed to produce output
+### Phase 4: Wait for Completion and Collect Results
 
-### Phase 5: Launch Synthesis Teammate
+1. **Poll for output files** using a bash loop (keeps context minimal compared to reading TaskOutput for every agent):
+   ```bash
+   # Wait until all expected output files exist (poll interval: 5s)
+   EXPECTED_FILES=("{agent-id-1}.md" "{agent-id-2}.md" ...)
+   TIMEOUT=600; ELAPSED=0
+   while [ $ELAPSED -lt $TIMEOUT ]; do
+     ALL_DONE=true
+     for f in "${EXPECTED_FILES[@]}"; do
+       [ ! -f "{REVIEW_DIR}/$f" ] && ALL_DONE=false && break
+     done
+     $ALL_DONE && break
+     sleep 5; ELAPSED=$((ELAPSED + 5))
+   done
+   ```
+   Adapt the file list and REVIEW_DIR to actual values.
 
-1. **Create a synthesis task**:
-   Use `TaskCreate` with subject `"Synthesize findings into unified report"`.
+2. **If the timeout expires with missing files**: For each missing agent, call `TaskOutput` with `block: false` using the stored `task_id` to check whether the agent is still running or has failed. If still running, continue waiting (repeat the poll loop). If failed, record it in the gap report and move on.
 
-2. **Spawn the synthesis teammate**:
+3. After all agents have completed (or been recorded as failed), check which output files exist.
+4. Build a gap report string listing any agents that failed to produce output.
+
+### Phase 5: Launch Synthesis Agent
+
+1. **Spawn the synthesis agent** (as a background task to minimize context):
    - `subagent_type`: `"general-purpose"`
-   - `team_name`: `"deep-review"`
-   - `name`: `"synthesizer"`
+   - `run_in_background`: `true`
    - `prompt`: Include the following in the prompt:
      - Path to the synthesis instructions file: `agents/synthesizer.md`
      - The `REVIEW_DIR` path
@@ -381,23 +387,22 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
      - The gap report (if any agents failed)
      - The scope description (for the report header)
      - Instruction to write the final report to `{REVIEW_DIR}/REPORT.md`
-     - Instruction to mark the synthesis task as completed and send a message to `"team-lead"` when done
 
-3. Wait for the synthesis teammate to complete.
+   Store the returned `task_id` for the synthesis agent.
 
-### Phase 6: Present Report and Cleanup
+2. **Wait for completion** using `TaskOutput` with `block: true` and `timeout: 600000` (10 minutes) on the synthesis `task_id`. This blocks until the agent actually finishes — no arbitrary timeout guessing. The returned output can be ignored; the report is in the file.
+
+### Phase 6: Present Report
 
 1. **Read the report**: Read `{REVIEW_DIR}/REPORT.md` and present its contents to the user
-2. **Shutdown teammates**: Send shutdown requests to all teammates
-3. **Clean up team**: Use `TeamDelete` to clean up team infrastructure
-4. **Inform the user**: Let them know individual agent findings are available at `{REVIEW_DIR}/` for detailed inspection
+2. **Inform the user**: Let them know individual agent findings are available at `{REVIEW_DIR}/` for detailed inspection
 
-## Teammate Prompt Template
+## Agent Prompt Template
 
-This is the standardized prompt given to each analysis teammate. Fill in the placeholders before sending.
+This is the standardized prompt given to each analysis agent. Fill in the placeholders before sending.
 
 ```
-You are a specialized code analysis agent on the "deep-review" team.
+You are a specialized code analysis agent.
 
 ## Your Task
 
@@ -405,10 +410,6 @@ You are a specialized code analysis agent on the "deep-review" team.
    (This is relative to the skill directory. Use the Read tool to read the file.)
 2. Analyze the code following those instructions
 3. Write your complete findings to: {OUTPUT_FILE_PATH}
-4. Mark your task as completed via TaskUpdate (task ID: {TASK_ID})
-5. Send a brief summary to "team-lead" via SendMessage
-   - Include only counts (e.g., "Found 3 critical, 2 important new issues; 5 pre-existing issues")
-   - Do NOT include detailed findings in the message — they are in the output file
 
 ## Scope Context
 
@@ -432,8 +433,6 @@ are [PRE-EXISTING].
 
 If you encounter errors during analysis (e.g., files not found, permission issues):
 - Write partial findings to the output file along with an ERROR section describing what went wrong
-- Mark the task as completed anyway (so the pipeline is not blocked)
-- Note the error in your summary message to team-lead
 
 ## Important
 
@@ -455,3 +454,4 @@ If you encounter errors during analysis (e.g., files not found, permission issue
 - Use `mobile`, `ts`, or explicit platform names (e.g., `ios`, `python`) to force specific platform reviewers
 - Create follow-up tickets for critical pre-existing issues discovered during review
 - Individual agent findings are available in `/tmp/deep-review-*/` for detailed inspection
+- Agents run as background tasks (not tmux-style teams) — the primary session's context stays minimal
