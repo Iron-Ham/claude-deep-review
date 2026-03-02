@@ -31,6 +31,13 @@ Identify scalability risks - things that become problems as the codebase grows.
    - Files with too many responsibilities
    - Files that multiple people frequently conflict on
 
+## Issue Severity Classification
+
+- **CRITICAL**: Scalability bottlenecks that will cause failures at current growth trajectory (e.g., manual sync points that are already being missed, modules so large they block parallel development)
+- **HIGH**: Significant scaling risks that will become painful within the next few development cycles, unclear module boundaries causing frequent misplacement of code, adding new modules requires touching 5+ files
+- **MEDIUM**: Moderate scaling concerns (growing modules, accumulating boilerplate), manual steps that are manageable now but will become error-prone, somewhat unclear boundaries
+- **LOW**: Minor scalability improvements, optional restructuring for future growth, cosmetic organization enhancements
+
 ## Output Format
 
 ```markdown
@@ -45,30 +52,32 @@ Identify scalability risks - things that become problems as the codebase grows.
 - **Pain points**: {what makes it hard}
 
 #### Manual Synchronization Points
-| What | Where | Risk |
-|------|-------|------|
-| ... | ... | High/Medium/Low |
+| What | Where | Classification | Severity |
+|------|-------|----------------|----------|
+| ... | ... | [NEW]/[PRE-EXISTING] | CRITICAL/HIGH/MEDIUM/LOW |
 
 #### Module Boundary Clarity
 - **Rating**: Clear/Somewhat Clear/Unclear
 - **Issues**: {specific clarity problems}
 
 #### Growth Concerns
-| Area | Current Size | Trajectory | Action Needed |
-|------|--------------|------------|---------------|
-| ... | ... | Growing/Stable | Yes/No |
+| Area | Current Size | Trajectory | Classification | Severity |
+|------|--------------|------------|----------------|----------|
+| ... | ... | Growing/Stable | [NEW]/[PRE-EXISTING] | CRITICAL/HIGH/MEDIUM/LOW |
 
 #### Top 5 Scalability Risks (by severity)
-1. {critical risk}
-2. {high risk}
-3. {high risk}
-4. {medium risk}
-5. {medium risk}
+1. {CRITICAL risk and why}
+2. {HIGH risk}
+3. {HIGH risk}
+4. {MEDIUM risk}
+5. {MEDIUM risk}
 
 #### Recommendations
-- **Immediate**: {address now}
-- **Soon**: {address this quarter}
-- **Later**: {keep an eye on}
+**[NEW] issues (fix before merge)**:
+- {scalability risks introduced by this PR}
+
+**[PRE-EXISTING] issues (technical debt)**:
+- {existing scalability concerns to track}
 ```
 
 READ-ONLY analysis - do not modify any files.

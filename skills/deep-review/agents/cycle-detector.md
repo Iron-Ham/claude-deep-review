@@ -27,6 +27,13 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
    - Interfaces that exist solely to break cycles
    - Excessive use of dependency injection to hide cycles
 
+## Issue Severity Classification
+
+- **CRITICAL**: Direct circular dependencies between modules that cause build failures, test code leaking into production builds, cycles that create runtime initialization order issues
+- **HIGH**: Indirect cycles (3+ modules) that significantly increase coupling and make refactoring dangerous, production code depending on test utilities
+- **MEDIUM**: Dependency smell patterns indicating hidden or emerging cycles, interfaces existing solely to break cycles without addressing root cause, suspicious bidirectional relationships
+- **LOW**: Minor dependency direction improvements, optional restructuring to reduce cycle risk, patterns that could become cycles as the codebase grows
+
 ## Output Format
 
 ```markdown
