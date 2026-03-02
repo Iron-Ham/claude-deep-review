@@ -364,23 +364,42 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 
 ### Phase 4: Wait for Completion and Collect Results
 
-1. **Poll for output files** using a bash loop (keeps context minimal compared to reading TaskOutput for every agent):
-   ```bash
-   # Wait until all expected output files exist (poll interval: 5s)
-   EXPECTED_FILES=("{agent-id-1}.md" "{agent-id-2}.md" ...)
-   TIMEOUT=600; ELAPSED=0
-   while [ $ELAPSED -lt $TIMEOUT ]; do
-     ALL_DONE=true
-     for f in "${EXPECTED_FILES[@]}"; do
-       [ ! -f "{REVIEW_DIR}/$f" ] && ALL_DONE=false && break
-     done
-     $ALL_DONE && break
-     sleep 5; ELAPSED=$((ELAPSED + 5))
-   done
-   ```
-   Adapt the file list and REVIEW_DIR to actual values.
+**IMPORTANT — Polling Anti-Patterns (DO NOT DO THESE):**
+- NEVER call `TaskOutput` or `TaskList` in a loop to check agent progress — this creates dozens of tool calls that bloat context
+- NEVER poll individual agents one at a time — use the single bash loop below
+- The ONLY polling mechanism is the bash file-existence loop. One bash call, one tool invocation, minimal context.
 
-2. **If the timeout expires with missing files**: For each missing agent, call `TaskOutput` with `block: false` using the stored `task_id` to check whether the agent is still running or has failed. If still running, continue waiting (repeat the poll loop). If failed, record it in the gap report and move on.
+1. **Poll for output files** using a **single** bash command (keeps context minimal — one tool call for the entire wait):
+   ```bash
+   # Wait for all agent output files. Initial 30s delay (agents need startup time),
+   # then check every 15s. Progress is printed so you can see completion status.
+   EXPECTED_FILES=("{agent-id-1}.md" "{agent-id-2}.md" ...)
+   TOTAL=${#EXPECTED_FILES[@]}
+   REVIEW_DIR="{REVIEW_DIR}"
+   echo "Waiting 30s for agents to start..."
+   sleep 30
+   TIMEOUT=570; ELAPSED=0
+   while [ $ELAPSED -lt $TIMEOUT ]; do
+     DONE=0
+     MISSING=""
+     for f in "${EXPECTED_FILES[@]}"; do
+       if [ -f "$REVIEW_DIR/$f" ]; then
+         DONE=$((DONE + 1))
+       else
+         MISSING="$MISSING $f"
+       fi
+     done
+     echo "Progress: $DONE/$TOTAL complete (elapsed: $((ELAPSED + 30))s)"
+     [ $DONE -eq $TOTAL ] && echo "All agents finished." && break
+     sleep 15; ELAPSED=$((ELAPSED + 15))
+   done
+   if [ $DONE -lt $TOTAL ]; then
+     echo "TIMEOUT — missing:$MISSING"
+   fi
+   ```
+   Adapt the file list and REVIEW_DIR to actual values. Run this as a **single bash command** with `timeout: 600000`.
+
+2. **If the timeout expires with missing files**: For each missing agent, call `TaskOutput` with `block: false` using the stored `task_id` to check whether the agent is still running or has failed. If still running, you may do **one** additional bash poll loop (same pattern, shorter timeout). If failed, record it in the gap report and move on. Do NOT enter a per-agent TaskOutput polling loop.
 
 3. After all agents have completed (or been recorded as failed), check which output files exist.
 4. Build a gap report string listing any agents that failed to produce output.
@@ -465,3 +484,53 @@ If you encounter errors during analysis (e.g., files not found, permission issue
 - Create follow-up tickets for critical pre-existing issues discovered during review
 - Individual agent findings are available in `/tmp/deep-review-*/` for detailed inspection
 - Agents run as background tasks (not tmux-style teams) — the primary session's context stays minimal
+
+## Headless Mode
+
+Run deep-review non-interactively from scripts, CI/CD pipelines, or Makefiles.
+
+### Quick Invocation
+
+```bash
+# Run a core review on the current PR branch
+claude -p "/deep-review --pr" \
+  --allowedTools "Skill,Agent,Bash,Read,Write,Glob,Grep,TaskOutput"
+
+# Full review with JSON output for downstream processing
+claude -p "/deep-review full --pr" \
+  --allowedTools "Skill,Agent,Bash,Read,Write,Glob,Grep,TaskOutput" \
+  --output-format json
+
+# Review uncommitted changes
+claude -p "/deep-review --changes" \
+  --allowedTools "Skill,Agent,Bash,Read,Write,Glob,Grep,TaskOutput"
+```
+
+### CI/CD Integration
+
+```yaml
+# GitHub Actions example
+- name: Deep Review
+  run: |
+    claude -p "/deep-review --pr" \
+      --allowedTools "Skill,Agent,Bash,Read,Write,Glob,Grep,TaskOutput" \
+      --output-format text > review-report.txt
+    # Post as PR comment, fail on critical issues, etc.
+```
+
+### Standalone Script (Zero Polling)
+
+For maximum efficiency, bypass the in-session orchestration entirely by running each agent as a separate headless process. This eliminates all polling overhead — the shell `wait` builtin handles synchronization.
+
+```bash
+# Core review (default)
+./scripts/standalone-review.sh
+
+# Full review
+./scripts/standalone-review.sh full
+
+# Specific aspects
+./scripts/standalone-review.sh code errors perf
+```
+
+See [`scripts/standalone-review.sh`](../../scripts/standalone-review.sh) for the full script. Each agent runs as a fully independent Claude process — no shared context, no polling, no orchestration overhead.
