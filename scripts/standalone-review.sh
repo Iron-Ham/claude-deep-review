@@ -99,6 +99,7 @@ agents_for_aspect() {
     github-actions) echo "github-actions-reviewer" ;;
     sql)            echo "sql-reviewer" ;;
     swift-data)     echo "swift-data-reviewer" ;;
+    agent-instructions) echo "agent-instructions-reviewer" ;;
     # Group aliases
     mobile)     echo "ios-platform-reviewer android-platform-reviewer" ;;
     ts)         echo "ts-frontend-reviewer ts-backend-reviewer" ;;

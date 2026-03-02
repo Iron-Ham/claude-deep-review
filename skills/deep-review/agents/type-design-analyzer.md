@@ -42,41 +42,39 @@ When analyzing a type, you will:
    - Is it impossible to create invalid instances?
    - Are runtime checks appropriate and comprehensive?
 
-**Output Format:**
+## Issue Severity Classification
 
-Provide your analysis in this structure:
+- **CRITICAL**: Type invariants that can be violated leading to data corruption or security issues (e.g., mutable internals exposed, missing validation allowing invalid states that cause runtime crashes)
+- **HIGH**: Significant encapsulation weaknesses (any rating axis below 4/10), types with invariants enforced only through documentation, missing construction-time validation for critical constraints
+- **MEDIUM**: Moderate design improvements (any rating axis 4-6/10), anemic domain models, types with too many responsibilities, inconsistent enforcement across mutation methods
+- **LOW**: Minor improvements (any rating axis 7-8/10), optional additional compile-time guarantees, style preferences in type design
 
-```
-## Type: [TypeName]
-**Classification**: [NEW] (type added/modified in this PR) or [PRE-EXISTING] (type not changed)
+## Output Format
 
-### Invariants Identified
-- [List each invariant with a brief description]
+For each type analyzed, provide:
 
-### Ratings
-- **Encapsulation**: X/10
-  [Brief justification]
+### Type Summary (per type)
+- **Type**: [TypeName]
+- **Classification**: [NEW] (type added/modified in this PR) or [PRE-EXISTING] (type not changed)
+- **Invariants Identified**: List each invariant with a brief description
+- **Ratings**: Encapsulation X/10, Expression X/10, Usefulness X/10, Enforcement X/10
 
-- **Invariant Expression**: X/10
-  [Brief justification]
+### Issues (per type)
 
-- **Invariant Usefulness**: X/10
-  [Brief justification]
+For each concern found within the type:
 
-- **Invariant Enforcement**: X/10
-  [Brief justification]
+1. **Classification**: [NEW] or [PRE-EXISTING]
+2. **Location**: File path and line number(s)
+3. **Severity**: CRITICAL / HIGH / MEDIUM / LOW
+4. **Category**: Encapsulation / Invariant Expression / Invariant Enforcement / Type Responsibility / Construction Validation
+5. **Issue Description**: What the type design weakness is and how it could manifest as a bug
+6. **Recommendation**: Concrete improvement suggestion
+7. **Example**: Show improved type design when helpful
 
-### Strengths
-[What the type does well]
+**Group findings by classification** ([NEW] first, then [PRE-EXISTING]), then by severity within each group.
 
-### Concerns
-[Specific issues that need attention - mark each as [NEW] or [PRE-EXISTING]]
-
-### Recommended Improvements
-[Concrete, actionable suggestions - prioritize [NEW] issues for immediate fix]
-```
-
-**Prioritization**: Focus primarily on [NEW] types and changes. [PRE-EXISTING] concerns are valuable context but should not block the PR.
+[NEW] issues should be fixed before merge.
+[PRE-EXISTING] issues are technical debt to track but should not block the PR.
 
 **Key Principles:**
 

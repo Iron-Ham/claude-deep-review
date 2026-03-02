@@ -4,7 +4,7 @@ A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/e
 
 ## Features
 
-- **45 specialized review agents** running in parallel via team-based orchestration
+- **46 specialized review agents** running in parallel via team-based orchestration
 - **File-based data flow** — agent findings written to files, keeping context windows lightweight
 - **Dedicated synthesis** — a separate agent merges all findings with a fresh context window
 - **Flexible scope detection** — review PR changes, uncommitted work, or specific paths
@@ -126,7 +126,12 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 /deep-review python rust --pr
 ```
 
-Platform reviewers are also **automatically included** when the changed files are relevant to a specific platform. For example, running `/deep-review` on a project with iOS Swift changes will include the iOS reviewer. The system uses its judgment to disambiguate — `.swift` files in a macOS project trigger the macOS reviewer (not iOS), `.vue` files trigger the Vue reviewer, `angular.json` projects trigger Angular, `Dockerfile` changes trigger Docker, K8s manifests trigger Kubernetes, `.graphql` files trigger GraphQL, `.github/workflows/*.yml` changes trigger GitHub Actions, and `.ts` files in an Express app trigger the backend reviewer (not the frontend one).
+```bash
+# Agent instructions reviewer (CLAUDE.md, AGENTS.md, prompts)
+/deep-review agent-instructions --pr
+```
+
+Platform reviewers are also **automatically included** when the changed files are relevant to a specific platform. For example, running `/deep-review` on a project with iOS Swift changes will include the iOS reviewer. The system uses its judgment to disambiguate — `.swift` files in a macOS project trigger the macOS reviewer (not iOS), `.vue` files trigger the Vue reviewer, `angular.json` projects trigger Angular, `Dockerfile` changes trigger Docker, K8s manifests trigger Kubernetes, `.graphql` files trigger GraphQL, `.github/workflows/*.yml` changes trigger GitHub Actions, `CLAUDE.md`/`AGENTS.md`/`.cursorrules`/`.claude/` changes trigger the Agent Instructions reviewer, and `.ts` files in an Express app trigger the backend reviewer (not the frontend one).
 
 ### Combined Examples
 
@@ -199,6 +204,7 @@ Platform reviewers are also **automatically included** when the changed files ar
 | `kubernetes` | K8s manifests, resource limits, RBAC, probes, Helm | Kubernetes Reviewer |
 | `graphql` | Schema design, resolver N+1, query security, DataLoader | GraphQL Reviewer |
 | `github-actions` | Workflow security, secret handling, action pinning | GitHub Actions Reviewer |
+| `agent-instructions` | CLAUDE.md, AGENTS.md, agent definitions, prompt security | Agent Instructions Reviewer |
 | `mobile` | iOS + Android combined | iOS + Android Platform Reviewers |
 | `apple` | iOS + macOS combined | iOS + macOS Platform Reviewers |
 | `ts` | TypeScript frontend + backend combined | Both TypeScript Reviewers |
@@ -308,6 +314,8 @@ These agents are automatically included when the team lead determines they are r
 
 - **GitHub Actions Reviewer** - Reviews GitHub Actions workflows for security vulnerabilities (`pull_request_target`, expression injection, unpinned actions), secret handling, permissions scoping, and pipeline reliability.
 
+- **Agent Instructions Reviewer** - Reviews AI agent instruction files (CLAUDE.md, AGENTS.md, .cursorrules, agent definitions, skill files) for clarity, contradictions, security boundaries, prompt injection resistance, completeness, and maintainability.
+
 ## Output Format
 
 The skill produces a synthesized report with:
@@ -398,6 +406,7 @@ claude-deep-review/
 │           ├── kubernetes-reviewer.md
 │           ├── graphql-reviewer.md
 │           ├── github-actions-reviewer.md
+│           ├── agent-instructions-reviewer.md
 │           └── synthesizer.md
 ├── README.md
 └── LICENSE

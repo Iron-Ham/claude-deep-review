@@ -27,6 +27,13 @@ Analyze the module dependency architecture of this codebase.
    - High fan-in: many modules depend on this (potential god module)
    - High fan-out: depends on many modules (potential coupling issue)
 
+## Issue Severity Classification
+
+- **CRITICAL**: Circular dependencies between layers, foundation/core modules depending on app-level code, dependency directions that will cause build failures or runtime crashes
+- **HIGH**: Feature modules depending directly on each other, layering violations that significantly increase coupling, god modules with extreme fan-in creating fragile bottlenecks
+- **MEDIUM**: Modules with elevated fan-in/fan-out that may become problematic as the codebase grows, minor layering deviations, utility modules accumulating unrelated responsibilities
+- **LOW**: Slight fan-in/fan-out imbalances, optional restructuring for cleaner layering, cosmetic dependency organization improvements
+
 ## Output Format
 
 ```markdown
