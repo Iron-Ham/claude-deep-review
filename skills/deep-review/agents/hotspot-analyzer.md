@@ -67,11 +67,11 @@ Identify coupling hotspots - modules or files that are overly connected.
 3. {third priority}
 
 #### Recommendations
-**[NEW] issues (fix before merge)**:
+**[NEW] issues (introduced by this PR)**:
 - {hotspots introduced or worsened by this PR}
 
-**[PRE-EXISTING] issues (technical debt)**:
-- {existing hotspots to track}
+**[PRE-EXISTING] issues (in scope — fix before merge)**:
+- {existing hotspots within the PR's scope}
 ```
 
 READ-ONLY analysis - do not modify any files.

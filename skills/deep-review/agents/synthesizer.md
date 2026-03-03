@@ -42,13 +42,13 @@ Write the report using this exact structure:
 - **Agents Run**: {list of agents that produced findings}
 - **Agents Missing**: {list of agents that did not produce findings, or "None"}
 - **New Issues (from this PR)**: {critical count} critical, {important count} important
-- **Pre-existing Issues (technical debt)**: {critical count} critical, {important count} important
+- **Pre-existing Issues (in scope)**: {critical count} critical, {important count} important
 
 ---
 
 ## NEW ISSUES (Introduced by this PR)
 
-These issues are in code that was added or modified in this PR. **Address before merge.**
+These issues are in code that was added or modified in this PR. **Fix before merge.**
 
 ### Critical Issues (must fix)
 
@@ -75,24 +75,25 @@ These issues are in code that was added or modified in this PR. **Address before
 
 ---
 
-## PRE-EXISTING ISSUES (Technical Debt)
+## PRE-EXISTING ISSUES (In Scope)
 
-These issues exist in code that was **not changed** by this PR. They are important to track but **should not block merge**.
+These issues exist in code that was **not changed** by this PR but fall within the PR's scope. **Fix before merge.**
 
-### Critical (track for future fix)
-
-#### {Issue Title}
-- **Source**: {agent-name(s)}
-- **Location**: `{file:line}`
-- **Details**: {description}
-- **Suggested fix**: {recommendation}
-
-### Important (track for future fix)
+### Critical Issues (must fix)
 
 #### {Issue Title}
 - **Source**: {agent-name(s)}
 - **Location**: `{file:line}`
 - **Details**: {description}
+- **Fix**: {recommendation}
+
+### Important Issues (should fix)
+
+#### {Issue Title}
+- **Source**: {agent-name(s)}
+- **Location**: `{file:line}`
+- **Details**: {description}
+- **Fix**: {recommendation}
 
 ---
 
@@ -122,14 +123,10 @@ Use "Not assessed" when the corresponding agent was not run or did not produce f
 
 ### Action Plan
 
-1. **Before merge** (new critical/important issues):
-   - {specific fixes needed for code introduced by this PR}
+1. **Before merge**:
+   - {all critical and important issues — both new and pre-existing — that must be fixed}
 
-2. **Technical debt to track** (pre-existing issues):
-   - {critical pre-existing issues to create tickets for}
-   - {important pre-existing issues to address in future work}
-
-3. **Nice to have** (suggestions):
+2. **Nice to have** (suggestions):
    - {improvements for later}
 ```
 

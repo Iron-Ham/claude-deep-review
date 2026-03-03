@@ -63,11 +63,11 @@ Analyze for pattern consistency across modules in this codebase.
 
 #### Standardization Recommendations
 
-**[NEW] deviations (fix before merge)**:
+**[NEW] deviations (introduced by this PR)**:
 - {pattern violations introduced by this PR}
 
-**[PRE-EXISTING] deviations (technical debt)**:
-- {existing inconsistencies to track}
+**[PRE-EXISTING] deviations (in scope — fix before merge)**:
+- {existing inconsistencies within the PR's scope}
 
 **Quick Wins**: {easy fixes that improve consistency}
 ```

@@ -55,21 +55,21 @@ For each violation, classify as:
 - **[NEW]**: Violation introduced by changes in this PR
 - **[PRE-EXISTING]**: Violation that existed before this PR
 
-| Violation | Classification | Explanation |
-|-----------|----------------|-------------|
-| ... | [NEW]/[PRE-EXISTING] | ... |
+| Violation | Classification | Severity | Explanation |
+|-----------|----------------|----------|-------------|
+| ... | [NEW]/[PRE-EXISTING] | CRITICAL/HIGH/MEDIUM/LOW | ... |
 
 #### Fan-in/Fan-out Concerns
-| Module | Fan-in | Fan-out | Classification | Concern |
-|--------|--------|---------|----------------|---------|
-| ... | ... | ... | [NEW]/[PRE-EXISTING] | ... |
+| Module | Fan-in | Fan-out | Classification | Severity | Concern |
+|--------|--------|---------|----------------|----------|---------|
+| ... | ... | ... | [NEW]/[PRE-EXISTING] | CRITICAL/HIGH/MEDIUM/LOW | ... |
 
 #### Recommendations
-**[NEW] issues (fix before merge)**:
+**[NEW] issues (introduced by this PR)**:
 - {issues introduced by this PR}
 
-**[PRE-EXISTING] issues (technical debt)**:
-- {existing issues to track}
+**[PRE-EXISTING] issues (in scope — fix before merge)**:
+- {existing issues within the PR's scope}
 ```
 
 READ-ONLY analysis - do not modify any files.

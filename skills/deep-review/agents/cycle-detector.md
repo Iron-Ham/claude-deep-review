@@ -42,6 +42,7 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
 #### Direct Cycles Found
 - **Cycle 1**: A -> B -> A
   - **Classification**: [NEW] or [PRE-EXISTING]
+  - **Severity**: CRITICAL/HIGH/MEDIUM/LOW
   - A imports: {what from B}
   - B imports: {what from A}
   - Impact: {why this is problematic}
@@ -50,21 +51,22 @@ Analyze for circular dependencies and bidirectional imports in this codebase.
 #### Indirect Cycles Found
 - **Cycle 1**: A -> B -> C -> A
   - **Classification**: [NEW] or [PRE-EXISTING]
+  - **Severity**: CRITICAL/HIGH/MEDIUM/LOW
   - Chain explanation
   - Impact and suggestion
 
 #### Test/Production Coupling
-- {any issues found, classified as [NEW] or [PRE-EXISTING]}
+- {any issues found, with **Classification** and **Severity**}
 
 #### Suspicious Relationships
 - {patterns that might indicate hidden cycles}
 
 #### Recommendations
-**[NEW] cycles (fix before merge)**:
+**[NEW] cycles (introduced by this PR)**:
 - {cycles introduced by this PR}
 
-**[PRE-EXISTING] cycles (technical debt)**:
-- {existing cycles to track}
+**[PRE-EXISTING] cycles (in scope — fix before merge)**:
+- {existing cycles within the PR's scope}
 ```
 
 READ-ONLY analysis - do not modify any files.

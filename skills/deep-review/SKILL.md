@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, agent instructions audit, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions, SQL, Swift Data). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (technical debt). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, agent instructions audit, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions, SQL, Swift Data). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (in unchanged code but still actionable). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
@@ -20,10 +20,10 @@ Run a comprehensive deep review using a team of specialized agents covering arch
 
 When reviewing PR changes, all issues are classified as:
 
-- **[NEW]**: Issues in code **added or modified** by this PR. These must be addressed before merge.
-- **[PRE-EXISTING]**: Issues in code **not changed** by this PR. These are technical debt observations that should not block the PR but are valuable to track.
+- **[NEW]**: Issues in code **added or modified** by this PR.
+- **[PRE-EXISTING]**: Issues in code **not changed** by this PR but within the PR's scope.
 
-This distinction helps reviewers focus on what's actionable for the current PR while still surfacing important context about surrounding code quality.
+Both classifications represent real issues that should be addressed. Pre-existing issues within the PR's scope are the PR's responsibility to fix unless explicitly noted otherwise — if you're touching a module, you own its health. The classification exists for attribution (distinguishing what the PR introduced vs. what it inherited), not for downgrading pre-existing issues.
 
 ## Scope Detection
 
@@ -235,8 +235,9 @@ All agents use `subagent_type: "general-purpose"` (needed for file writing).
    - **[NEW]**: Issue is in code that was ADDED or MODIFIED in this PR (within the changed line ranges above)
    - **[PRE-EXISTING]**: Issue is in code that was NOT changed by this PR (outside the changed line ranges)
 
-   This distinction is critical for PR review. New issues should be fixed before merge.
-   Pre-existing issues are technical debt to track but should not block the PR.
+   Both classifications represent real issues that should be addressed.
+   The classification exists for attribution — distinguishing what the PR introduced vs. inherited.
+   Pre-existing issues relevant to the PR's scope are the PR's responsibility to fix unless explicitly noted otherwise.
    ```
 
 ### Phase 1.5: Determine Platform Reviewers
@@ -491,13 +492,13 @@ If you encounter errors during analysis (e.g., files not found, permission issue
 - Run `/deep-review --pr` before creating a PR to catch issues early
 - Use `core` (default) for quick essential checks
 - Use `full` for comprehensive review before major merges
-- **Focus on [NEW] issues** - these must be fixed before merge
-- **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
+- **[NEW] issues** were introduced by this PR
+- **[PRE-EXISTING] issues** within the PR's scope are the PR's responsibility to fix unless explicitly noted otherwise
 - Re-run after fixes to verify resolution
 - Use specific aspects (e.g., `types tests`) when you know the concern
 - Platform reviewers are automatically included when relevant — no need to specify them manually
 - Use `mobile`, `ts`, or explicit platform names (e.g., `ios`, `python`) to force specific platform reviewers
-- Create follow-up tickets for critical pre-existing issues discovered during review
+- Create follow-up tickets for pre-existing issues outside the PR's scope if discovered during review
 - Individual agent findings are available in `/tmp/deep-review-*/` for detailed inspection
 - Agents run as background tasks (not tmux-style teams) — the primary session's context stays minimal
 
