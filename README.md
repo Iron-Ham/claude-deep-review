@@ -1,10 +1,10 @@
 # Claude Deep Review
 
-A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that combines architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, and code simplification into a single command.
+A comprehensive code review skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that combines architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, and security auditing into a single command.
 
 ## Features
 
-- **46 specialized review agents** running in parallel via team-based orchestration
+- **49 specialized review agents** running in parallel via team-based orchestration
 - **File-based data flow** — agent findings written to files, keeping context windows lightweight
 - **Dedicated synthesis** — a separate agent merges all findings with a fresh context window
 - **Flexible scope detection** — review PR changes, uncommitted work, or specific paths
@@ -127,6 +127,9 @@ git clone https://github.com/Iron-Ham/claude-deep-review.git /path/to/your/proje
 ```
 
 ```bash
+# Security audit (injection, auth, access control, crypto, supply chain)
+/deep-review security --pr
+
 # Agent instructions reviewer (CLAUDE.md, AGENTS.md, prompts)
 /deep-review agent-instructions --pr
 ```
@@ -169,6 +172,7 @@ Platform reviewers are also **automatically included** when the changed files ar
 | `l10n` | Hardcoded strings, i18n readiness, locale handling, RTL | Localization Scanner |
 | `concurrency` | Race conditions, deadlocks, thread safety, async pitfalls | Concurrency Analyzer |
 | `perf` | Algorithmic complexity, allocations, caching, rendering, N+1 queries | Performance Analyzer |
+| `security` | Injection, auth, access control, cryptography, data exposure, supply chain | Security Reviewer |
 
 **Platform-specific aspects** (automatically included when relevant, or explicitly requested):
 
@@ -249,6 +253,8 @@ Platform reviewers are also **automatically included** when the changed files ar
 - **Concurrency Analyzer** - Detects race conditions, deadlocks, thread-safety violations, async/await pitfalls, and concurrency model mismatches across languages and frameworks.
 
 - **Performance Analyzer** - Identifies algorithmic complexity issues, excessive allocations, N+1 queries, rendering bottlenecks, bundle bloat, and missed caching/parallelization opportunities.
+
+- **Security Reviewer** - Audits code for injection vulnerabilities (SQL, XSS, command, SSTI), authentication and authorization flaws, cryptographic misuse, sensitive data exposure, SSRF, CSRF, insecure deserialization, and supply chain risks.
 
 ### Platform-Specific Agents
 
@@ -406,6 +412,9 @@ claude-deep-review/
 │           ├── kubernetes-reviewer.md
 │           ├── graphql-reviewer.md
 │           ├── github-actions-reviewer.md
+│           ├── sql-reviewer.md
+│           ├── swift-data-reviewer.md
+│           ├── security-reviewer.md
 │           ├── agent-instructions-reviewer.md
 │           └── synthesizer.md
 ├── README.md
