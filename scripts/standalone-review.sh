@@ -54,7 +54,8 @@ CORE_AGENTS=("code-reviewer" "silent-failure-hunter" "dependency-mapper" "cycle-
 
 FULL_AGENTS=("${CORE_AGENTS[@]}" "type-design-analyzer" "comment-analyzer" "test-analyzer"
              "code-simplifier" "accessibility-scanner" "localization-scanner"
-             "concurrency-analyzer" "performance-analyzer")
+             "concurrency-analyzer" "performance-analyzer"
+             "security-reviewer")
 
 agents_for_aspect() {
   case "$1" in
@@ -70,6 +71,7 @@ agents_for_aspect() {
     l10n)        echo "localization-scanner" ;;
     concurrency) echo "concurrency-analyzer" ;;
     perf)        echo "performance-analyzer" ;;
+    security)    echo "security-reviewer" ;;
     # Platform aspects
     ios)            echo "ios-platform-reviewer" ;;
     macos)          echo "macos-platform-reviewer" ;;

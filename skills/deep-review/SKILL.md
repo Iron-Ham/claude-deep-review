@@ -1,12 +1,12 @@
 ---
 name: deep-review
-description: Run a comprehensive deep review combining architecture analysis, code review, error handling audit, type design analysis, comment verification, test coverage analysis, accessibility audit, localization review, concurrency analysis, performance analysis, code simplification, agent instructions audit, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions, SQL, Swift Data). Platform reviewers are automatically included when relevant. Distinguishes between NEW issues (introduced by PR) and PRE-EXISTING issues (in unchanged code but still actionable). Use when reviewing PR changes, before merging, or for thorough code quality assessment. Supports flags --pr, --branch, --changes for scope detection.
+description: Comprehensive code review using specialized agents for architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, simplification, security, agent instructions audit, and platform-specific reviews (iOS, macOS, Android, Angular, TypeScript, Next.js, Vue.js, Python, Django, Ruby, Rust, Go, Rails, Flutter, Java/Spring Boot, C#/.NET, PHP/Laravel, C/C++, React Native, Svelte/SvelteKit, Elixir/Phoenix, Kotlin Server, Scala, Terraform, Shell/Bash, Docker, Kubernetes, GraphQL, GitHub Actions, SQL, Swift Data). Distinguishes NEW from PRE-EXISTING issues. Supports --pr, --branch, --changes flags.
 argument-hint: "[aspects] [--pr|--branch|--changes|path]"
 ---
 
 # Deep Review Skill
 
-Run a comprehensive deep review using a team of specialized agents covering architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, and simplification.
+Run a comprehensive deep review using a team of specialized agents covering architecture, code quality, error handling, types, comments, tests, accessibility, localization, concurrency, performance, simplification, and security.
 
 ## When to Use
 
@@ -61,6 +61,7 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `l10n` | Hardcoded strings, i18n readiness, locale handling, RTL |
 | `concurrency` | Race conditions, deadlocks, thread safety, async pitfalls |
 | `perf` | Algorithmic complexity, allocations, caching, rendering, N+1 queries |
+| `security` | Injection, auth, access control, cryptography, data exposure, supply chain |
 | `core` | code + errors + arch (default) |
 | `full` | All cross-cutting aspects (does not include platform-specific) |
 
@@ -136,6 +137,7 @@ Platform reviewers are **automatically included** when the team lead determines 
 /deep-review python rust --pr   # explicitly include Python and Rust reviewers
 /deep-review sql --pr           # SQL reviewer (queries, schema, migrations, injection)
 /deep-review swift-data --pr    # Swift Data reviewer (SwiftData, Core Data, GRDB)
+/deep-review security --pr            # Security reviewer (injection, auth, access control, crypto)
 /deep-review agent-instructions --pr  # Agent instructions reviewer (CLAUDE.md, AGENTS.md, prompts)
 /deep-review src/features       # analyze specific path (+ auto-detected platforms)
 ```
@@ -191,6 +193,7 @@ Platform reviewers are **automatically included** when the team lead determines 
 | github-actions-reviewer | github-actions | inherit | agents/github-actions-reviewer.md |
 | sql-reviewer | sql | inherit | agents/sql-reviewer.md |
 | swift-data-reviewer | swift-data | inherit | agents/swift-data-reviewer.md |
+| security-reviewer | security | inherit | agents/security-reviewer.md |
 | agent-instructions-reviewer | agent-instructions | inherit | agents/agent-instructions-reviewer.md |
 
 All agents use `subagent_type: "general-purpose"` (needed for file writing).
@@ -316,6 +319,7 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `l10n` | Localization Scanner |
 | `concurrency` | Concurrency Analyzer |
 | `perf` | Performance Analyzer |
+| `security` | Security Reviewer |
 | `ios` | iOS Platform Reviewer |
 | `macos` | macOS Platform Reviewer |
 | `android` | Android Platform Reviewer |
