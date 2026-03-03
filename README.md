@@ -322,7 +322,7 @@ The skill produces a synthesized report with:
 
 1. **Executive Summary** - Scope, agents run, issue counts
 2. **New Issues** (from this PR) - Critical, Important, Suggestions
-3. **Pre-existing Issues** (technical debt) - Tracked separately, do not block merge
+3. **Pre-existing Issues** (in scope) - In unchanged code but the PR's responsibility to fix
 4. **Architecture Health** - Table of checks with pass/fail
 5. **Strengths** - What's done well
 6. **Action Plan** - Prioritized next steps
@@ -417,8 +417,8 @@ claude-deep-review/
 - Run `/deep-review` before creating a PR to catch issues early
 - Use `core` (default) for quick essential checks during development
 - Use `full` before major merges or releases
-- **Focus on [NEW] issues** - these must be fixed before merge
-- **[PRE-EXISTING] issues** are technical debt to track, not PR blockers
+- **[NEW] issues** were introduced by this PR
+- **[PRE-EXISTING] issues** within the PR's scope are the PR's responsibility to fix unless explicitly noted otherwise
 - Platform reviewers are automatically included when relevant — no need to specify `ios`, `python`, etc. manually
 - Use `mobile`, `apple`, `ts`, `jvm`, `infra`, `containers`, or explicit platform names to force platform reviewers when needed
 - Re-run after fixes to verify resolution

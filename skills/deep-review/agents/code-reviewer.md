@@ -39,8 +39,8 @@ Start by listing what you're reviewing. For each issue provide:
 
 **Group findings by classification** ([NEW] first, then [PRE-EXISTING]), then by severity within each group.
 
-[NEW] issues should be fixed before merge.
-[PRE-EXISTING] issues are technical debt to track but should not block the PR.
+[NEW] issues were introduced by this PR.
+[PRE-EXISTING] issues are in unchanged code within the PR's scope — they are the PR's responsibility to fix unless explicitly noted otherwise.
 
 If no issues are found, confirm the code meets standards with a brief summary.
 

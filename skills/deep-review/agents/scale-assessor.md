@@ -73,11 +73,11 @@ Identify scalability risks - things that become problems as the codebase grows.
 5. {MEDIUM risk}
 
 #### Recommendations
-**[NEW] issues (fix before merge)**:
+**[NEW] issues (introduced by this PR)**:
 - {scalability risks introduced by this PR}
 
-**[PRE-EXISTING] issues (technical debt)**:
-- {existing scalability concerns to track}
+**[PRE-EXISTING] issues (in scope — fix before merge)**:
+- {existing scalability concerns within the PR's scope}
 ```
 
 READ-ONLY analysis - do not modify any files.
