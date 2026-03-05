@@ -435,10 +435,34 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 
 2. **Wait for completion** using `TaskOutput` with `block: true` and `timeout: 600000` (10 minutes) on the synthesis `task_id`. This blocks until the agent actually finishes — no arbitrary timeout guessing. The returned output can be ignored; the report is in the file.
 
-### Phase 6: Present Report
+### Phase 6: Holistic Re-prioritization and Presentation
 
-1. **Read the report**: Read `{REVIEW_DIR}/REPORT.md` and present its contents to the user
-2. **Inform the user**: Let them know individual agent findings are available at `{REVIEW_DIR}/` for detailed inspection
+Each agent reviews through a narrow lens and assigns severity relative to its own domain. A comment analyzer may flag a slightly stale docstring as HIGH because within the world of comments, it is — but in the context of the whole PR, it's trivial compared to a race condition the concurrency analyzer also flagged as HIGH. The synthesizer merges and deduplicates but preserves agent-assigned severities. **You are the first entity with the full picture — re-prioritize accordingly.**
+
+1. **Read the report**: Read `{REVIEW_DIR}/REPORT.md`
+
+2. **Re-prioritize with holistic judgment**. For each finding, evaluate its severity not within its own domain, but against the entire body of findings and the actual risk to the codebase:
+
+   **Prioritization tiers** (re-rank all findings into these):
+
+   | Tier | Criteria | Examples |
+   |------|----------|---------|
+   | **P0 — Merge blocker** | Would cause a crash, data loss/corruption, security breach, or compliance violation (e.g., GDPR, PCI) in production. The bar: if this shipped, would you page someone? | Auth bypass, SQL injection, unbounded data deletion, crash on common input, PII leaked to logs in EU-regulated service |
+   | **P1 — Should fix** | Concrete risk of real-world failure or meaningful degradation, but not an immediate emergency | N+1 queries on large datasets, error swallowing that hides production failures, missing validation on external input, race condition in low-traffic path |
+   | **P2 — Worth noting** | Genuine improvement but no immediate failure mode; lower risk or lower likelihood | Slightly misleading variable name in complex logic, missing edge-case test for unlikely scenario, suboptimal but functional pattern |
+   | **Noise — Omit** | Cosmetic, stylistic, or theoretical; no concrete failure mode | Import ordering, doc formatting, "consider renaming", aspirational refactoring, convention conformance with no functional impact |
+
+   **Key principle**: An agent's HIGH is not your HIGH. A HIGH-severity comment-rot finding and a HIGH-severity use-after-free are not in the same universe. Normalize across domains by asking: **"What actually goes wrong, and how badly, if this isn't fixed?"**
+
+3. **Present a re-prioritized report** to the user:
+   - Group findings by your re-assessed priority tier (P0, P1, P2), not by the original agent categories
+   - For each finding, include the original source agent(s) and location
+   - For P0 and P1 findings, state the **concrete failure mode** — what breaks, for whom, under what conditions
+   - Omit the Noise tier entirely — don't present findings just to say they were deprioritized
+   - Preserve the Architecture Health table and Strengths section from the original report as-is
+   - If the re-prioritization leaves no P0 or P1 findings, say so clearly — the code is in good shape
+
+4. **Inform the user**: Let them know the full synthesized report and individual agent findings are available at `{REVIEW_DIR}/` if they want the unfiltered view
 
 ## Agent Prompt Template
 
