@@ -63,6 +63,7 @@ Select which aspects to review. Default is `core` (code + errors + arch).
 | `perf` | Algorithmic complexity, allocations, caching, rendering, N+1 queries |
 | `security` | Injection, auth, access control, cryptography, data exposure, supply chain |
 | `pii` | PII leaks in logs, caches, APIs, cross-user exposure, unsafe storage |
+| `review` | CLAUDE.md compliance, git history bugs, prior PR feedback |
 | `core` | code + errors + arch (default) |
 | `full` | All cross-cutting aspects (does not include platform-specific) |
 
@@ -141,6 +142,7 @@ Platform reviewers are **automatically included** when the team lead determines 
 /deep-review swift-data --pr    # Swift Data reviewer (SwiftData, Core Data, GRDB)
 /deep-review security --pr            # Security reviewer (injection, auth, access control, crypto)
 /deep-review agent-instructions --pr  # Agent instructions reviewer (CLAUDE.md, AGENTS.md, prompts)
+/deep-review review --pr              # CLAUDE.md compliance, git history, prior PR feedback
 /deep-review src/features       # analyze specific path (+ auto-detected platforms)
 ```
 
@@ -198,6 +200,9 @@ Platform reviewers are **automatically included** when the team lead determines 
 | swift-data-reviewer | swift-data | inherit | agents/swift-data-reviewer.md |
 | security-reviewer | security | inherit | agents/security-reviewer.md |
 | agent-instructions-reviewer | agent-instructions | inherit | agents/agent-instructions-reviewer.md |
+| guidelines-reviewer | review | inherit | agents/guidelines-reviewer.md |
+| git-history-reviewer | review | inherit | agents/git-history-reviewer.md |
+| prior-feedback-reviewer | review | inherit | agents/prior-feedback-reviewer.md |
 
 All agents use `subagent_type: "general-purpose"` (needed for file writing).
 
@@ -324,6 +329,7 @@ Based on selected aspects (including any auto-detected platform aspects from Pha
 | `perf` | Performance Analyzer |
 | `security` | Security Reviewer |
 | `pii` | PII Leak Scanner |
+| `review` | Guidelines Reviewer, Git History Reviewer, Prior Feedback Reviewer |
 | `ios` | iOS Platform Reviewer |
 | `macos` | macOS Platform Reviewer |
 | `android` | Android Platform Reviewer |
@@ -583,6 +589,26 @@ For maximum efficiency, bypass the in-session orchestration entirely by running 
 
 # Specific aspects
 ./scripts/standalone-review.sh code errors perf
+
+# Custom base branch
+REVIEW_BASE=develop ./scripts/standalone-review.sh
+
+# Adjust confidence threshold (default: 80, range: 0-100)
+CONFIDENCE_THRESHOLD=90 ./scripts/standalone-review.sh full
+
+# Use a different model for re-prioritization (default: opus)
+REVIEW_MODEL=sonnet ./scripts/standalone-review.sh
 ```
 
 See [`scripts/standalone-review.sh`](../../scripts/standalone-review.sh) for the full script. Each agent runs as a fully independent Claude process — no shared context, no polling, no orchestration overhead.
+
+#### Pipeline Phases
+
+| Phase | Model | What |
+|-------|-------|------|
+| Analysis | sonnet (parallel) | Domain-specialized agents find issues |
+| Synthesis | sonnet | Merge, deduplicate, structured report |
+| Confidence scoring | haiku (parallel) | Validate each finding against the diff, score 0-100, filter below threshold |
+| Re-prioritization | opus | Cross-domain severity calibration into P0/P1/P2 tiers |
+
+Confidence scoring runs cheap parallel validators (haiku) that check whether each finding survives scrutiny against the actual diff. This filters false positives before they reach the expensive re-prioritization step, improving both cost and output quality.
